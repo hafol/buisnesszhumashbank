@@ -2810,6 +2810,14 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
   const [offices, setOffices] = useState<any[]>([]);
   const [city, setCity] = useState('Almaty');
 
+  if (!exchangeRates) {
+    return (
+      <div className="p-6 text-center text-slate-500">
+        Загрузка данных обмена валют...
+      </div>
+    );
+  }
+
   useEffect(() => {
     detectLocationManual('Almaty');
   }, []);
@@ -2944,7 +2952,7 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
                   <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{item.name}</p>
                 </div>
               </div>
-              <p className="text-2xl font-bold">₸{item.rate.toFixed(2)}</p>
+              <p className="text-2xl font-bold">₸{item.rate?.toFixed(2) || '0.00'}</p>
             </div>
           ))}
         </div>
@@ -3207,7 +3215,7 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
               'px-4 py-3 rounded-xl font-bold text-emerald-500',
               isDark ? 'bg-slate-700' : 'bg-slate-100'
             )}>
-              ₸450,250
+              ₸{exchangeRates?.usdKzt?.toLocaleString() || '450,250'}
             </div>
           </div>
         </div>
