@@ -72,7 +72,8 @@ export function RegisterPage({
                 city: form.city,
             });
         } catch (err: any) {
-            setError(err.message || t.error);
+            const errorKey = err.message;
+            setError((t as any)[errorKey] || err.message || t.error);
         } finally {
             setLoading(false);
         }

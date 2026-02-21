@@ -84,12 +84,12 @@ router.post('/login', async (req, res) => {
             .single();
 
         if (error || !user) {
-            return res.status(401).json({ error: 'Неверный email или пароль' });
+            return res.status(401).json({ error: 'errorUserNotFound' });
         }
 
         const validPassword = await bcrypt.compare(password, user.password_hash);
         if (!validPassword) {
-            return res.status(401).json({ error: 'Неверный email или пароль' });
+            return res.status(401).json({ error: 'errorWrongPassword' });
         }
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -98,7 +98,7 @@ router.post('/login', async (req, res) => {
         res.json({ token, user: safeUser });
     } catch (err) {
         console.error('Login error:', err);
-        res.status(500).json({ error: 'Ошибка при входе' });
+        res.status(500).json({ error: 'errorAuthGeneral' });
     }
 });
 

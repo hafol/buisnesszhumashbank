@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building, Eye, EyeOff, Globe } from 'lucide-react';
+import { Building, Eye, EyeOff, Globe, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { translations, Language } from '../constants/translations';
 import { cn } from '../utils/cn';
@@ -31,7 +31,8 @@ export function LoginPage({ onSwitchToRegister, onLanguageChange, language }: Au
         try {
             await login(email, password);
         } catch (err: any) {
-            setError(err.message || t.error);
+            const errorKey = err.message;
+            setError((t as any)[errorKey] || err.message || t.error);
         } finally {
             setLoading(false);
         }
@@ -73,8 +74,16 @@ export function LoginPage({ onSwitchToRegister, onLanguageChange, language }: Au
                     <h2 className="text-2xl font-bold text-white mb-6">{t.loginToAccount}</h2>
 
                     {error && (
-                        <div className="mb-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm">
-                            {error}
+                        <div className="mb-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
+                            <div className="flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                <span>{error}</span>
+                            </div>
+                            {error === 'Failed to fetch' && (
+                                <p className="text-[10px] mt-1 opacity-60">
+                                    {language === 'ru' ? 'Проверьте соединение с интернетом или статус сервера.' : 'Check your internet connection or server status.'}
+                                </p>
+                            )}
                         </div>
                     )}
 

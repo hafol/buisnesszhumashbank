@@ -153,6 +153,6 @@ export interface ExchangeRates {
   lastUpdated: string;
 }
 
-export type Language = 'ru' | 'en';
+export type Language = 'ru' | 'en' | 'kz';
 export type Theme = 'light' | 'dark';
 export type Currency = 'KZT' | 'USD' | 'EUR' | 'RUB';

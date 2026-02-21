@@ -1,5 +1,5 @@
 // Frontend API service — all requests go through here
-const BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:5000');
+export const BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://buisnesszhumashBank.onrender.com' : 'http://localhost:5000');
 
 function getToken(): string | null {
     return localStorage.getItem('bzb_token');

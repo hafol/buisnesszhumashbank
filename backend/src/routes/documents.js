@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
 const supabase = require('../services/supabase');
 const { authMiddleware } = require('../middleware/auth');
 const { analyzeDocument } = require('../services/gemini');
@@ -57,12 +58,15 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
         const { type, projectId } = req.body;
         const fileSizeKb = Math.round(req.file.size / 1024);
 
+        // Fix UTF-8 encoding for filename (multer uses latin1 by default)
+        const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+
         const { data, error } = await supabase
             .from('documents')
             .insert({
                 user_id: req.user.id,
                 project_id: projectId || null,
-                name: req.file.originalname,
+                name: originalName,
                 type: type || 'other',
                 file_path: req.file.filename,
                 file_size: `${fileSizeKb} KB`,
@@ -100,6 +104,10 @@ router.post('/:id/analyze', authMiddleware, async (req, res) => {
                 const buffer = fs.readFileSync(filePath);
                 const parsed = await pdfParse(buffer);
                 text = parsed.text;
+            } else if (ext === '.docx' || ext === '.doc') {
+                const buffer = fs.readFileSync(filePath);
+                const result = await mammoth.extractRawText({ buffer });
+                text = result.value;
             } else {
                 text = fs.readFileSync(filePath, 'utf8');
             }

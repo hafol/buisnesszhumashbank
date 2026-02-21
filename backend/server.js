@@ -20,7 +20,10 @@ app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
 // CORS
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: [
+        'http://localhost:5173',
+        'https://buisness-zhumash-bank.vercel.app'
+    ],
     credentials: true,
 }));
 
@@ -39,15 +42,19 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/receipts', receiptRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/bank-accounts', bankAccountRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/exchange', exchangeRoutes);
-app.use('/api/payments', paymentRoutes);
+// Routes - support both /api/path and /path for Vercel flexibility
+const apiRouter = express.Router();
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/projects', projectRoutes);
+apiRouter.use('/receipts', receiptRoutes);
+apiRouter.use('/documents', documentRoutes);
+apiRouter.use('/bank-accounts', bankAccountRoutes);
+apiRouter.use('/ai', aiRoutes);
+apiRouter.use('/exchange', exchangeRoutes);
+apiRouter.use('/payments', paymentRoutes);
+
+app.use('/api', apiRouter);
+app.use('/', apiRouter); // Fallback for when /api is stripped by Vercel
 
 // Health check
 app.get('/health', (req, res) => {

@@ -3,6 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
+const mammoth = require('mammoth');
 const supabase = require('../services/supabase');
 const { authMiddleware, requirePremium } = require('../middleware/auth');
 const { calculateTaxes, analyzeContract, parseTransactions } = require('../services/gemini');
@@ -86,6 +87,10 @@ router.post('/analyze-contract', authMiddleware, requirePremium, async (req, res
                         const buffer = fs.readFileSync(filePath);
                         const parsed = await pdfParse(buffer);
                         text = parsed.text;
+                    } else if (ext === '.docx' || ext === '.doc') {
+                        const buffer = fs.readFileSync(filePath);
+                        const result = await mammoth.extractRawText({ buffer });
+                        text = result.value;
                     } else {
                         text = fs.readFileSync(filePath, 'utf8');
                     }
@@ -119,6 +124,12 @@ router.post('/parse-payroll', authMiddleware, requirePremium, upload.single('sta
                 const parsed = await pdfParse(buffer);
                 statementText = parsed.text;
                 console.log('PDF text extracted, length:', statementText.length);
+            } else if (ext === '.docx' || ext === '.doc') {
+                console.log('Parsing Word Doc...');
+                const buffer = fs.readFileSync(req.file.path);
+                const result = await mammoth.extractRawText({ buffer });
+                statementText = result.value;
+                console.log('Word text extracted, length:', statementText.length);
             } else {
                 statementText = fs.readFileSync(req.file.path, 'utf8');
                 console.log('Text file read, length:', statementText.length);
