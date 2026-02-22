@@ -2647,7 +2647,13 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.open(`${BASE_URL}/uploads/${doc.file_path}`, '_blank')}
+                  onClick={() => {
+                    if (doc.file_path?.startsWith('http')) {
+                      window.open(doc.file_path, '_blank');
+                    } else {
+                      window.open(`${BASE_URL}/uploads/${doc.file_path}`, '_blank');
+                    }
+                  }}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-sm font-medium transition-colors',
                     isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'

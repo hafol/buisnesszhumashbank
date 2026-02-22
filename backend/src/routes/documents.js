@@ -10,18 +10,9 @@ const { analyzeDocument } = require('../services/gemini');
 
 const router = express.Router();
 
-// Configure multer for local file storage
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = path.join(__dirname, '../../../uploads');
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        const unique = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        cb(null, unique + path.extname(file.originalname));
-    }
-});
+// Configure multer for memory storage (file buffer)
+const storage = multer.memoryStorage();
+
 
 const upload = multer({
     storage,
@@ -60,6 +51,28 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
 
         // Fix UTF-8 encoding for filename (multer uses latin1 by default)
         const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+        const ext = path.extname(originalName);
+        const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+
+        // Upload file buffer to Supabase Storage
+        const { data: storageData, error: storageError } = await supabase.storage
+            .from('documents')
+            .upload(`${req.user.id}/${uniqueFilename}`, req.file.buffer, {
+                contentType: req.file.mimetype,
+                upsert: false
+            });
+
+        if (storageError) {
+            console.error('Supabase Storage Error:', storageError);
+            return res.status(500).json({ error: 'Ошибка сохранения файла в облако' });
+        }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+            .from('documents')
+            .getPublicUrl(`${req.user.id}/${uniqueFilename}`);
+
+        const publicUrl = publicUrlData.publicUrl;
 
         const { data, error } = await supabase
             .from('documents')
@@ -68,7 +81,7 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
                 project_id: projectId || null,
                 name: originalName,
                 type: type || 'other',
-                file_path: req.file.filename,
+                file_path: publicUrl, // Save public URL instead of local filename
                 file_size: `${fileSizeKb} KB`,
             })
             .select()
@@ -94,22 +107,31 @@ router.post('/:id/analyze', authMiddleware, async (req, res) => {
 
         if (error || !doc) return res.status(404).json({ error: 'Документ не найден' });
 
-        // Extract text from file
+        // Extract text from file URL
         let text = '';
-        const filePath = path.join(__dirname, '../../../uploads', doc.file_path);
+        const fileUrl = doc.file_path;
 
-        if (fs.existsSync(filePath)) {
-            const ext = path.extname(doc.file_path).toLowerCase();
-            if (ext === '.pdf') {
-                const buffer = fs.readFileSync(filePath);
-                const parsed = await pdfParse(buffer);
-                text = parsed.text;
-            } else if (ext === '.docx' || ext === '.doc') {
-                const buffer = fs.readFileSync(filePath);
-                const result = await mammoth.extractRawText({ buffer });
-                text = result.value;
-            } else {
-                text = fs.readFileSync(filePath, 'utf8');
+        if (fileUrl) {
+            try {
+                // Fetch file buffer from public URL
+                const fileResponse = await fetch(fileUrl);
+                if (!fileResponse.ok) throw new Error('Failed to fetch file from Storage');
+
+                const arrayBuffer = await fileResponse.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                const ext = path.extname(new URL(fileUrl).pathname).toLowerCase() || '.txt';
+
+                if (ext === '.pdf') {
+                    const parsed = await pdfParse(buffer);
+                    text = parsed.text;
+                } else if (ext === '.docx' || ext === '.doc') {
+                    const result = await mammoth.extractRawText({ buffer });
+                    text = result.value;
+                } else {
+                    text = buffer.toString('utf8');
+                }
+            } catch (fetchErr) {
+                console.error('File parsing error:', fetchErr);
             }
         }
 
@@ -142,9 +164,21 @@ router.delete('/:id', authMiddleware, async (req, res) => {
             .eq('user_id', req.user.id)
             .single();
 
-        if (doc?.file_path) {
-            const filePath = path.join(__dirname, '../../../uploads', doc.file_path);
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        if (doc && doc.file_path) {
+            try {
+                // Extract relative path inside bucket from the public URL
+                const urlParts = doc.file_path.split('/documents/');
+                if (urlParts.length === 2) {
+                    const storagePath = urlParts[1];
+                    const { error: deleteError } = await supabase.storage
+                        .from('documents')
+                        .remove([storagePath]);
+
+                    if (deleteError) console.error('Storage deletion error:', deleteError);
+                }
+            } catch (err) {
+                console.error('Error parsing file URL for deletion:', err);
+            }
         }
 
         const { error } = await supabase
