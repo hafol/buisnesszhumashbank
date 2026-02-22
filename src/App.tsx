@@ -346,7 +346,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
               {/* Language Switcher */}
               <div className={cn(
-                'flex items-center bg-white/5 rounded-xl p-1 border',
+                'hidden md:flex items-center bg-white/5 rounded-xl p-1 border',
                 isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-100'
               )}>
                 {(['ru', 'en', 'kz'] as Language[]).map((l) => (
@@ -376,13 +376,13 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
               )}
 
               <div className={cn(
-                'flex items-center gap-3 px-4 py-2 rounded-xl',
+                'flex items-center gap-3 px-2 md:px-4 py-1.5 md:py-2 rounded-xl',
                 isDark ? 'bg-slate-800' : 'bg-slate-100'
               )}>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm md:text-base">
                   {user?.name?.charAt(0)}
                 </div>
-                <div className="text-sm">
+                <div className="hidden md:block text-sm">
                   <p className="font-semibold">{user?.name}</p>
                   <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>
                     {user?.business_type === 'IP' ? t.ip : t.too}
@@ -3144,37 +3144,37 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-2 md:gap-3">
                     <div className={cn(
-                      'p-2.5 rounded-xl text-center border',
+                      'p-1.5 md:p-2.5 rounded-lg md:rounded-xl text-center border',
                       isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'
                     )}>
                       <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">USD</p>
-                      <div className="flex items-center justify-center gap-2 text-sm font-semibold">
+                      <div className="flex flex-col xl:flex-row items-center justify-center gap-0 xl:gap-2 text-[11px] sm:text-sm font-semibold">
                         <span className="text-emerald-500">{office.rates.usdBuy}</span>
-                        <span className="text-slate-300">|</span>
+                        <span className="text-slate-300 hidden xl:block">|</span>
                         <span className="text-red-400">{office.rates.usdSell}</span>
                       </div>
                     </div>
                     <div className={cn(
-                      'p-2.5 rounded-xl text-center border',
+                      'p-1.5 md:p-2.5 rounded-lg md:rounded-xl text-center border',
                       isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'
                     )}>
                       <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">EUR</p>
-                      <div className="flex items-center justify-center gap-2 text-sm font-semibold">
+                      <div className="flex flex-col xl:flex-row items-center justify-center gap-0 xl:gap-2 text-[11px] sm:text-sm font-semibold">
                         <span className="text-emerald-500">{office.rates.eurBuy}</span>
-                        <span className="text-slate-300">|</span>
+                        <span className="text-slate-300 hidden xl:block">|</span>
                         <span className="text-red-400">{office.rates.eurSell}</span>
                       </div>
                     </div>
                     <div className={cn(
-                      'p-2.5 rounded-xl text-center border',
+                      'p-1.5 md:p-2.5 rounded-lg md:rounded-xl text-center border',
                       isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200'
                     )}>
                       <p className="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">RUB</p>
-                      <div className="flex items-center justify-center gap-2 text-sm font-semibold">
+                      <div className="flex flex-col xl:flex-row items-center justify-center gap-0 xl:gap-2 text-[11px] sm:text-sm font-semibold">
                         <span className="text-emerald-500">{office.rates.rubBuy}</span>
-                        <span className="text-slate-300">|</span>
+                        <span className="text-slate-300 hidden xl:block">|</span>
                         <span className="text-red-400">{office.rates.rubSell}</span>
                       </div>
                     </div>
