@@ -219,7 +219,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
       {/* Sidebar */}
       <aside className={cn(
-        'fixed left-0 top-0 h-full z-50 transition-transform duration-300 md:translate-x-0',
+        'fixed left-0 top-0 h-full z-50 transition-transform duration-300 md:translate-x-0 flex flex-col',
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
         sidebarOpen ? 'w-64' : 'w-20',
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200',
@@ -257,7 +257,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           </button>
         </div>
 
-        <nav className="mt-4 px-3">
+        <nav className="mt-4 px-3 flex-1 overflow-y-auto pb-4">
           {modules.map((module) => (
             <button
               key={module.id}
@@ -285,7 +285,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           ))}
         </nav>
 
-        <div className="absolute bottom-4 left-0 right-0 px-3 space-y-2">
+        <div className="px-3 pb-4 space-y-2 mt-auto">
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             className={cn(

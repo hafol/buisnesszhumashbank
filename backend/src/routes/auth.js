@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: insertError.message || 'Ошибка базы данных' });
         }
 
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
         res.status(201).json({ token, user });
     } catch (err) {
@@ -92,7 +92,7 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'errorWrongPassword' });
         }
 
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
         const { password_hash, ...safeUser } = user;
         res.json({ token, user: safeUser });
