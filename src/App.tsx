@@ -207,11 +207,17 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
   return (
     <div className={cn(
       'min-h-screen flex transition-colors duration-300 relative overflow-hidden',
-      isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'
+      isDark ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-900'
     )}>
       {/* Premium Ambient Background */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/20 blur-[120px] pointer-events-none mix-blend-screen" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-500/10 blur-[120px] pointer-events-none mix-blend-screen" />
+      <div className={cn(
+        "fixed top-[-20%] left-[-10%] w-[70vw] h-[70vw] rounded-full blur-[120px] pointer-events-none z-0",
+        isDark ? "bg-emerald-500/20 mix-blend-screen" : "bg-emerald-400/30 mix-blend-multiply"
+      )} />
+      <div className={cn(
+        "fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full blur-[120px] pointer-events-none z-0",
+        isDark ? "bg-teal-500/10 mix-blend-screen" : "bg-teal-400/30 mix-blend-multiply"
+      )} />
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
@@ -223,10 +229,10 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
       {/* Sidebar */}
       <aside className={cn(
-        'fixed left-0 top-0 h-full z-50 transition-transform duration-300 md:translate-x-0 flex flex-col',
+        'fixed left-0 top-0 h-full z-40 transition-transform duration-300 md:translate-x-0 flex flex-col',
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
         sidebarOpen ? 'w-64' : 'w-20',
-        isDark ? 'bg-slate-900/60 backdrop-blur-2xl border-slate-800' : 'bg-white/70 backdrop-blur-2xl border-white/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]',
+        isDark ? 'bg-slate-900/60 backdrop-blur-2xl border-slate-800' : 'bg-white/60 backdrop-blur-2xl border-white/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]',
         'border-r'
       )}>
         <div className="p-4 flex items-center justify-between">
@@ -341,8 +347,8 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
       )}>
         {/* Header */}
         <header className={cn(
-          'sticky top-0 z-40 px-6 py-4 border-b backdrop-blur-2xl transition-all duration-300',
-          isDark ? 'bg-slate-950/70 border-slate-800' : 'bg-white/70 border-white/50 shadow-[0_4px_24px_rgba(0,0,0,0.02)]'
+          'sticky top-0 z-30 px-6 py-4 border-b backdrop-blur-2xl transition-all duration-300',
+          isDark ? 'bg-slate-950/70 border-slate-800' : 'bg-white/60 border-white/50 shadow-[0_4px_24px_rgba(0,0,0,0.02)]'
         )}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -441,7 +447,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
         )}
 
         {/* Module Content */}
-        <div className="p-6">
+        <div className="p-6 relative z-10 w-full">
           {activeModule === 'dashboard' && (
             <DashboardModule
               t={t}
@@ -748,7 +754,7 @@ function DashboardModule({
         {stats.map((stat, i) => (
           <div key={i} className={cn(
             'p-6 rounded-3xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl relative overflow-hidden group',
-            isDark ? 'bg-slate-900/40 backdrop-blur-xl border-slate-700/50 hover:bg-slate-800/50' : 'bg-white/70 backdrop-blur-xl border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:bg-white'
+            isDark ? 'bg-slate-900/40 backdrop-blur-xl border-slate-700/50 hover:bg-slate-800/50' : 'bg-white/50 backdrop-blur-xl border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:bg-white/70'
           )}>
             <div className="flex items-center justify-between mb-4">
               <div className={cn('p-3 rounded-2xl bg-gradient-to-br text-white', stat.color)}>
@@ -776,7 +782,7 @@ function DashboardModule({
         {/* Quick Actions */}
         <div className={cn(
           'p-6 rounded-3xl border relative overflow-hidden',
-          isDark ? 'bg-slate-900/40 backdrop-blur-xl border-slate-700/50' : 'bg-white/70 backdrop-blur-xl border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]'
+          isDark ? 'bg-slate-900/40 backdrop-blur-xl border-slate-700/50' : 'bg-white/50 backdrop-blur-xl border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]'
         )}>
           <h3 className="text-lg font-bold mb-4">{t.quickActions}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
