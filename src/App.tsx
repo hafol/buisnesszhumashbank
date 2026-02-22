@@ -306,6 +306,27 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
             <Globe className="w-5 h-5" />
             {sidebarOpen && <span>{language === 'ru' ? 'English' : 'Русский'}</span>}
           </button>
+
+          {/* Mobile Only: Currency Toggle */}
+          <div className="md:hidden pb-2">
+            <CurrencyToggle
+              current={displayCurrency}
+              onChange={setDisplayCurrency}
+              isDark={isDark}
+            />
+          </div>
+
+          {/* Mobile Only: Logout */}
+          <button
+            onClick={logout}
+            className={cn(
+              'w-full flex md:hidden items-center gap-3 px-3 py-3 rounded-xl transition-colors',
+              isDark ? 'hover:bg-red-900/20 text-red-400' : 'hover:bg-red-50 text-red-600'
+            )}
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium text-left">Выйти</span>
+          </button>
         </div>
       </aside>
 
@@ -338,11 +359,13 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
               </div>
             </div>
             <div className="flex items-center gap-2 md:gap-4">
-              <CurrencyToggle
-                current={displayCurrency}
-                onChange={setDisplayCurrency}
-                isDark={isDark}
-              />
+              <div className="hidden md:block">
+                <CurrencyToggle
+                  current={displayCurrency}
+                  onChange={setDisplayCurrency}
+                  isDark={isDark}
+                />
+              </div>
 
               {/* Language Switcher */}
               <div className={cn(
@@ -393,7 +416,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
               <button
                 onClick={logout}
                 className={cn(
-                  'p-2.5 rounded-xl transition-all border',
+                  'hidden md:flex p-2.5 rounded-xl transition-all border',
                   isDark
                     ? 'hover:bg-slate-800 border-slate-700 text-slate-400 hover:text-red-400'
                     : 'hover:bg-red-50 border-slate-200 text-slate-500 hover:text-red-600'
