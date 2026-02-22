@@ -80,19 +80,42 @@ router.post('/analyze-contract', authMiddleware, requirePremium, async (req, res
                 .single();
 
             if (doc?.file_path) {
-                const filePath = path.join(__dirname, '../../../uploads', doc.file_path);
-                if (fs.existsSync(filePath)) {
-                    const ext = path.extname(doc.file_path).toLowerCase();
-                    if (ext === '.pdf') {
-                        const buffer = fs.readFileSync(filePath);
-                        const parsed = await pdfParse(buffer);
-                        text = parsed.text;
-                    } else if (ext === '.docx' || ext === '.doc') {
-                        const buffer = fs.readFileSync(filePath);
-                        const result = await mammoth.extractRawText({ buffer });
-                        text = result.value;
-                    } else {
-                        text = fs.readFileSync(filePath, 'utf8');
+                if (doc.file_path.startsWith('http')) {
+                    try {
+                        const fileResponse = await fetch(doc.file_path);
+                        if (!fileResponse.ok) throw new Error('Failed to fetch file from Storage');
+
+                        const arrayBuffer = await fileResponse.arrayBuffer();
+                        const buffer = Buffer.from(arrayBuffer);
+                        const ext = path.extname(new URL(doc.file_path).pathname).toLowerCase() || '.txt';
+
+                        if (ext === '.pdf') {
+                            const parsed = await pdfParse(buffer);
+                            text = parsed.text;
+                        } else if (ext === '.docx' || ext === '.doc') {
+                            const result = await mammoth.extractRawText({ buffer });
+                            text = result.value;
+                        } else {
+                            text = buffer.toString('utf8');
+                        }
+                    } catch (fetchErr) {
+                        console.error('File parsing error from URL:', fetchErr);
+                    }
+                } else {
+                    const filePath = path.join(__dirname, '../../../uploads', doc.file_path);
+                    if (fs.existsSync(filePath)) {
+                        const ext = path.extname(doc.file_path).toLowerCase();
+                        if (ext === '.pdf') {
+                            const buffer = fs.readFileSync(filePath);
+                            const parsed = await pdfParse(buffer);
+                            text = parsed.text;
+                        } else if (ext === '.docx' || ext === '.doc') {
+                            const buffer = fs.readFileSync(filePath);
+                            const result = await mammoth.extractRawText({ buffer });
+                            text = result.value;
+                        } else {
+                            text = fs.readFileSync(filePath, 'utf8');
+                        }
                     }
                 }
             }
