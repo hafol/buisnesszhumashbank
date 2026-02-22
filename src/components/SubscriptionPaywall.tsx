@@ -25,7 +25,7 @@ export function SubscriptionPaywall({ onClose, language }: SubscriptionPaywallPr
             const { url } = await paymentsApi.createCheckout(selectedPlan);
             window.location.href = url;
         } catch (err: any) {
-            setError(err.message || 'Ошибка при создании сессии оплаты');
+            setError(err.message || 'Ошибка перенаправления на оплату');
         } finally {
             setLoading(false);
         }
