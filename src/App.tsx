@@ -206,9 +206,13 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
   return (
     <div className={cn(
-      'min-h-screen flex transition-colors duration-300',
-      isDark ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-900'
+      'min-h-screen flex transition-colors duration-300 relative overflow-hidden',
+      isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'
     )}>
+      {/* Premium Ambient Background */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/20 blur-[120px] pointer-events-none mix-blend-screen" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-500/10 blur-[120px] pointer-events-none mix-blend-screen" />
+
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div
@@ -222,7 +226,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
         'fixed left-0 top-0 h-full z-50 transition-transform duration-300 md:translate-x-0 flex flex-col',
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
         sidebarOpen ? 'w-64' : 'w-20',
-        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200',
+        isDark ? 'bg-slate-900/60 backdrop-blur-2xl border-slate-800' : 'bg-white/70 backdrop-blur-2xl border-white/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]',
         'border-r'
       )}>
         <div className="p-4 flex items-center justify-between">
@@ -337,8 +341,8 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
       )}>
         {/* Header */}
         <header className={cn(
-          'sticky top-0 z-40 px-6 py-4 border-b backdrop-blur-xl',
-          isDark ? 'bg-slate-900/80 border-slate-700' : 'bg-white/80 border-slate-200'
+          'sticky top-0 z-40 px-6 py-4 border-b backdrop-blur-2xl transition-all duration-300',
+          isDark ? 'bg-slate-950/70 border-slate-800' : 'bg-white/70 border-white/50 shadow-[0_4px_24px_rgba(0,0,0,0.02)]'
         )}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -743,8 +747,8 @@ function DashboardModule({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
           <div key={i} className={cn(
-            'p-6 rounded-3xl border transition-all hover:scale-[1.02]',
-            isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+            'p-6 rounded-3xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl relative overflow-hidden group',
+            isDark ? 'bg-slate-900/40 backdrop-blur-xl border-slate-700/50 hover:bg-slate-800/50' : 'bg-white/70 backdrop-blur-xl border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:bg-white'
           )}>
             <div className="flex items-center justify-between mb-4">
               <div className={cn('p-3 rounded-2xl bg-gradient-to-br text-white', stat.color)}>
@@ -771,8 +775,8 @@ function DashboardModule({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
         <div className={cn(
-          'p-6 rounded-3xl border',
-          isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+          'p-6 rounded-3xl border relative overflow-hidden',
+          isDark ? 'bg-slate-900/40 backdrop-blur-xl border-slate-700/50' : 'bg-white/70 backdrop-blur-xl border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)]'
         )}>
           <h3 className="text-lg font-bold mb-4">{t.quickActions}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
