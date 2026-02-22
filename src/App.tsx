@@ -67,6 +67,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
   const [theme, setTheme] = useState<Theme>('light');
   const [displayCurrency, setDisplayCurrency] = useState<Currency>('KZT');
   const [showPaywall, setShowPaywall] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Real Data State
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -175,10 +176,10 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
     { id: 'projects', icon: FolderKanban, label: t.projects },
     { id: 'cashRegister', icon: Receipt, label: t.cashRegister },
-    { id: 'taxAccountant', icon: Calculator, label: t.taxAccountant },
-    { id: 'bankStatements', icon: FileText, label: t.bankStatements },
-    { id: 'documents', icon: FileSearch, label: t.documents },
-    { id: 'docGen', icon: Printer, label: t.docGenerator || 'Генератор' },
+    { id: 'taxAccountant', icon: Calculator, label: t.taxAccountant, isPremium: true },
+    { id: 'bankStatements', icon: FileText, label: t.bankStatements, isPremium: true },
+    { id: 'documents', icon: FileSearch, label: t.documents, isPremium: true },
+    { id: 'docGen', icon: Printer, label: t.docGenerator || 'Генератор', isPremium: true },
     { id: 'banks', icon: Building2, label: t.banks },
     { id: 'exchange', icon: ArrowLeftRight, label: t.exchange },
   ];
@@ -208,9 +209,18 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
       'min-h-screen flex transition-colors duration-300',
       isDark ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-900'
     )}>
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside className={cn(
-        'fixed left-0 top-0 h-full z-50 transition-all duration-300',
+        'fixed left-0 top-0 h-full z-50 transition-transform duration-300 md:translate-x-0',
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
         sidebarOpen ? 'w-64' : 'w-20',
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200',
         'border-r'
@@ -228,13 +238,22 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
             </div>
           )}
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => {
+              if (window.innerWidth < 768) {
+                setMobileMenuOpen(false);
+              } else {
+                setSidebarOpen(!sidebarOpen);
+              }
+            }}
             className={cn(
               'p-2 rounded-lg transition-colors',
               isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-100'
             )}
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <X className="w-5 h-5 md:hidden" />
+            <div className="hidden md:block">
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </div>
           </button>
         </div>
 
@@ -242,16 +261,26 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           {modules.map((module) => (
             <button
               key={module.id}
-              onClick={() => setActiveModule(module.id)}
+              onClick={() => {
+                if (module.isPremium && !isPremium) {
+                  setShowPaywall(true);
+                } else {
+                  setActiveModule(module.id);
+                  if (window.innerWidth < 768) setMobileMenuOpen(false);
+                }
+              }}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all',
+                'w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1 transition-all relative',
                 activeModule === module.id
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25'
                   : isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
               )}
             >
               <module.icon className="w-5 h-5 flex-shrink-0" />
-              {sidebarOpen && <span className="font-medium">{module.label}</span>}
+              {sidebarOpen && <span className="font-medium text-left flex-1">{module.label}</span>}
+              {module.isPremium && sidebarOpen && (
+                <Crown className={cn("w-4 h-4", activeModule === module.id ? "text-white/80" : "text-amber-500")} />
+              )}
             </button>
           ))}
         </nav>
@@ -282,8 +311,8 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
       {/* Main Content */}
       <main className={cn(
-        'flex-1 transition-all duration-300',
-        sidebarOpen ? 'ml-64' : 'ml-20'
+        'flex-1 transition-all duration-300 min-h-screen w-full',
+        sidebarOpen ? 'md:ml-64' : 'md:ml-20'
       )}>
         {/* Header */}
         <header className={cn(
@@ -291,13 +320,24 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           isDark ? 'bg-slate-900/80 border-slate-700' : 'bg-white/80 border-slate-200'
         )}>
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">{modules.find(m => m.id === activeModule)?.label}</h2>
-              <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>
-                {user?.company} • {user?.iin}
-              </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className={cn(
+                  'p-2 -ml-2 rounded-lg transition-colors md:hidden',
+                  isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
+                )}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold line-clamp-1">{modules.find(m => m.id === activeModule)?.label}</h2>
+                <p className={cn('text-xs md:text-sm', isDark ? 'text-slate-400' : 'text-slate-500', 'line-clamp-1')}>
+                  {user?.company} • {user?.iin}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <CurrencyToggle
                 current={displayCurrency}
                 onChange={setDisplayCurrency}
@@ -513,7 +553,7 @@ function AddBankModal({ t, isDark, onClose, onAdd }: any) {
               )}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-1.5 block">{t.currency}</label>
               <select
@@ -712,7 +752,7 @@ function DashboardModule({
           isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <h3 className="text-lg font-bold mb-4">{t.quickActions}</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               { icon: Plus, label: t.newProject, color: 'emerald', module: 'projects' },
               { icon: Receipt, label: t.issueReceipt, color: 'blue', module: 'cashRegister' },
@@ -1363,7 +1403,7 @@ function CashRegisterModule({ t, isDark, user, formatCurrency, receipts, setRece
           <h3 className="text-lg font-semibold mb-4">{t.newReceipt}</h3>
 
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">{t.customerName}</label>
                 <input
