@@ -131,11 +131,11 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
         exchangeApi.rates().catch(() => mockExchangeRates),
         receiptsApi.list().catch(() => [])
       ]);
-      setBankAccounts(accs);
-      setProjects(projs);
-      setDocuments(docs);
-      setExchangeRates(rats);
-      setReceipts(recs);
+      setBankAccounts(accs || []);
+      setProjects(projs || []);
+      setDocuments(docs || []);
+      setExchangeRates(rats || mockExchangeRates);
+      setReceipts(recs || []);
 
     } catch (err) {
       console.error('Error filling demo data:', err);
@@ -155,11 +155,11 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           exchangeApi.rates().catch(() => mockExchangeRates),
           receiptsApi.list().catch(() => [])
         ]);
-        setBankAccounts(accs);
-        setProjects(projs);
-        setDocuments(docs);
-        setExchangeRates(rats);
-        setReceipts(recs);
+        setBankAccounts(accs || []);
+        setProjects(projs || []);
+        setDocuments(docs || []);
+        setExchangeRates(rats || mockExchangeRates);
+        setReceipts(recs || []);
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -200,7 +200,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
     return `${symbols[currency]}${amount.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
-  const totalBalance = bankAccounts.reduce((sum, acc) => {
+  const totalBalance = (bankAccounts || []).reduce((sum, acc) => {
     return sum + convertToDisplayCurrency(acc.balance, acc.currency);
   }, 0);
 
@@ -707,7 +707,7 @@ function DashboardModule({
   setActiveModule, onFillDemo, creatingDemo
 }: any) {
   console.log('Dashboard context:', { displayCurrency, documents, theme }); // Use them
-  const activeProjectsCount = projects.filter((p: any) => p.status === 'active').length;
+  const activeProjectsCount = (projects || []).filter((p: any) => p.status === 'active').length;
 
   // Stats calculation
   const monthlyIncome = 0; // Will be connected to transactions
@@ -1302,7 +1302,7 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
               </button>
             </div>
             <div className="space-y-3">
-              {milestones.map((m, idx) => (
+              {(milestones || []).map((m, idx) => (
                 <div key={m.id} className="flex items-center gap-3">
                   <span className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium',
@@ -1397,7 +1397,7 @@ function CashRegisterModule({ t, isDark, user, formatCurrency, receipts, setRece
   const [customerInfo, setCustomerInfo] = useState({ name: '', iin: '' });
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer'>('cash');
 
-  const total = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  const total = (items || []).reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
 
   const generateReceipt = async () => {
     setLoading(true);
