@@ -47,6 +47,7 @@ export const projectsApi = {
         request<any>(`/api/projects/milestones/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 };
 
+
 // Receipts
 export const receiptsApi = {
     list: () => request<any[]>('/api/receipts'),

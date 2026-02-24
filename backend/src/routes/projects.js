@@ -128,4 +128,44 @@ router.patch('/milestones/:id', authMiddleware, async (req, res) => {
     }
 });
 
+// POST add milestone to existing project
+router.post('/:projectId/milestones', authMiddleware, async (req, res) => {
+    try {
+        const { description, amount, dueDate } = req.body;
+        // Verify ownership
+        const { data: project, error: pErr } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('id', req.params.projectId)
+            .eq('user_id', req.user.id)
+            .single();
+        if (pErr || !project) return res.status(403).json({ error: 'Нет доступа' });
+
+        const { data, error } = await supabase
+            .from('milestones')
+            .insert({ project_id: req.params.projectId, description, amount, due_date: dueDate, status: 'pending' })
+            .select()
+            .single();
+        if (error) throw error;
+        res.status(201).json(data);
+    } catch (err) {
+        res.status(500).json({ error: 'Ошибка добавления этапа' });
+    }
+});
+
+// DELETE milestone
+router.delete('/milestones/:id', authMiddleware, async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('milestones')
+            .delete()
+            .eq('id', req.params.id);
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Ошибка удаления этапа' });
+    }
+});
+
 module.exports = router;
+
