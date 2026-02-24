@@ -205,4 +205,54 @@ ${documentText}
   return JSON.parse(cleaned);
 }
 
-module.exports = { analyzeContract, calculateTaxes, parseTransactions, analyzeDocument, chatWithTaxExpert };
+/**
+ * Business advisor AI with memory and financial context
+ */
+async function chatWithBusinessAdvisor({ businessName, businessType, businessDescription, transactions, chatHistory, userMessage }) {
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+  const profit = totalIncome - totalExpense;
+
+  const historyText = chatHistory.length > 0
+    ? chatHistory.map(m => `${m.role === 'user' ? 'Клиент' : 'ИИ-советник'}: ${m.message}`).join('\n')
+    : 'Это начало разговора.';
+
+  const recentTx = transactions.slice(0, 10).map(t =>
+    `${t.date}: ${t.type === 'income' ? '+' : '-'}₸${Number(t.amount).toLocaleString()} (${t.category}) — ${t.description}`
+  ).join('\n') || 'Транзакций нет';
+
+  const prompt = `Ты — персональный бизнес-советник и стратег по развитию бизнеса в Казахстане.
+
+ДАННЫЕ О БИЗНЕСЕ:
+- Название: ${businessName}
+- Тип: ${businessType}
+- Описание: ${businessDescription || 'Не указано'}
+- Общий доход: ₸${totalIncome.toLocaleString()}
+- Общие расходы: ₸${totalExpense.toLocaleString()}
+- Чистая прибыль: ₸${profit.toLocaleString()}
+
+ПОСЛЕДНИЕ ТРАНЗАКЦИИ:
+${recentTx}
+
+ИСТОРИЯ РАЗГОВОРА:
+${historyText}
+
+ТЕКУЩИЙ ВОПРОС КЛИЕНТА: "${userMessage}"
+
+ИНСТРУКЦИИ:
+1. Определи язык вопроса (русский, казахский, английский) и отвечай НА ТОМ ЖЕ ЯЗЫКЕ.
+2. Учитывай всю историю разговора — не повторяй уже сказанное.
+3. Используй реальные финансовые данные бизнеса в своих советах.
+4. Давай конкретные, практичные рекомендации по росту и масштабированию.
+5. Если спрашивают о прибыльности — анализируй соотношение доходов и расходов.
+6. Если нет транзакций — сначала попроси рассказать больше о бизнесе.
+7. Будь дружелюбным и мотивирующим, но реалистичным.
+8. Ответ должен быть структурированным (используй эмодзи для разделов).
+9. Не превышай 300 слов в ответе.`;
+
+  const result = await model.generateContent(prompt);
+  return result.response.text().trim();
+}
+
+module.exports = { analyzeContract, calculateTaxes, parseTransactions, analyzeDocument, chatWithTaxExpert, chatWithBusinessAdvisor };
+

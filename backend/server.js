@@ -12,6 +12,9 @@ const bankAccountRoutes = require('./src/routes/bankAccounts');
 const aiRoutes = require('./src/routes/ai');
 const exchangeRoutes = require('./src/routes/exchange');
 const paymentRoutes = require('./src/routes/payments');
+const businessRoutes = require('./src/routes/businesses');
+const businessTransactionRoutes = require('./src/routes/businessTransactions');
+const businessAiRoutes = require('./src/routes/businessAi');
 
 const app = express();
 
@@ -52,6 +55,9 @@ apiRouter.use('/bank-accounts', bankAccountRoutes);
 apiRouter.use('/ai', aiRoutes);
 apiRouter.use('/exchange', exchangeRoutes);
 apiRouter.use('/payments', paymentRoutes);
+apiRouter.use('/businesses', businessRoutes);
+apiRouter.use('/businesses/:businessId/transactions', businessTransactionRoutes);
+apiRouter.use('/businesses/:businessId/ai', businessAiRoutes);
 
 app.use('/api', apiRouter);
 app.use('/', apiRouter); // Fallback for when /api is stripped by Vercel

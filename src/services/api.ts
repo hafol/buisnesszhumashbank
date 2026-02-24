@@ -90,3 +90,26 @@ export const paymentsApi = {
     createCheckout: (plan: string) => request<any>('/api/payments/create-checkout', { method: 'POST', body: JSON.stringify({ plan }) }),
     subscription: () => request<any>('/api/payments/subscription'),
 };
+
+// Businesses
+export const businessesApi = {
+    list: () => request<any[]>('/api/businesses'),
+    create: (body: object) => request<any>('/api/businesses', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id: string, body: object) => request<any>(`/api/businesses/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    delete: (id: string) => request<any>(`/api/businesses/${id}`, { method: 'DELETE' }),
+};
+
+// Business Transactions
+export const businessTxApi = {
+    list: (businessId: string) => request<any[]>(`/api/businesses/${businessId}/transactions`),
+    create: (businessId: string, body: object) => request<any>(`/api/businesses/${businessId}/transactions`, { method: 'POST', body: JSON.stringify(body) }),
+    delete: (businessId: string, txId: string) => request<any>(`/api/businesses/${businessId}/transactions/${txId}`, { method: 'DELETE' }),
+};
+
+// Business AI
+export const businessAiApi = {
+    getHistory: (businessId: string) => request<any[]>(`/api/businesses/${businessId}/ai/history`),
+    sendMessage: (businessId: string, message: string) => request<any>(`/api/businesses/${businessId}/ai/chat`, { method: 'POST', body: JSON.stringify({ message }) }),
+    clearHistory: (businessId: string) => request<any>(`/api/businesses/${businessId}/ai/history`, { method: 'DELETE' }),
+};
+
