@@ -12,6 +12,8 @@ export const translations = {
     documents: 'Документы',
     banks: 'Мои банки',
     exchange: 'Курсы валют',
+    businesses: 'Мои Бизнесы',
+    viewTransactions: 'Посмотреть операции',
 
     // Header
     ip: 'ИП',
@@ -292,6 +294,8 @@ export const translations = {
     documents: 'Documents',
     banks: 'My Banks',
     exchange: 'Exchange Rates',
+    businesses: 'My Businesses',
+    viewTransactions: 'View Transactions',
     ip: 'IE',
     too: 'LLC',
     login: 'Login',
@@ -546,6 +550,8 @@ export const translations = {
     documents: 'Құжаттар',
     banks: 'Менің банктерім',
     exchange: 'Валюта бағамдары',
+    businesses: 'Менің бизнесім',
+    viewTransactions: 'Транзакцияларды қарау',
     ip: 'ЖК',
     too: 'ЖШС',
     login: 'Кіру',

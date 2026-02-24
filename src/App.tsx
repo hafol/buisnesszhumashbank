@@ -177,7 +177,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
   const modules = [
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
-    { id: 'businesses', icon: Building, label: 'Мои Бизнесы' },
+    { id: 'businesses', icon: Building, label: t.businesses || 'Мои Бизнесы' },
     { id: 'projects', icon: FolderKanban, label: t.projects },
     { id: 'cashRegister', icon: Receipt, label: t.cashRegister },
     { id: 'taxAccountant', icon: Calculator, label: t.taxAccountant, isPremium: true },
@@ -235,7 +235,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
       <aside className={cn(
         'fixed left-0 top-0 h-full z-40 transition-transform duration-300 md:translate-x-0 flex flex-col',
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
-        sidebarOpen ? 'w-64' : 'w-20',
+        sidebarOpen ? 'w-72' : 'w-20',
         isDark ? 'bg-slate-900/60 backdrop-blur-2xl border-slate-800' : 'bg-white/60 backdrop-blur-2xl border-white/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]',
         'border-r'
       )}>
@@ -291,7 +291,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
               )}
             >
               <module.icon className="w-5 h-5 flex-shrink-0" />
-              {sidebarOpen && <span className="font-medium text-left flex-1">{module.label}</span>}
+              {sidebarOpen && <span className="font-medium text-left flex-1 truncate leading-tight text-sm">{module.label}</span>}
               {module.isPremium && sidebarOpen && (
                 <Crown className={cn("w-4 h-4", activeModule === module.id ? "text-white/80" : "text-amber-500")} />
               )}
@@ -311,14 +311,32 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
             {sidebarOpen && <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>}
           </button>
           <button
-            onClick={() => setLanguage(language === 'ru' ? 'en' : 'ru')}
+            onClick={() => {
+              const cycle: Record<string, string> = { ru: 'en', en: 'kz', kz: 'ru' };
+              setLanguage((cycle[language] || 'ru') as any);
+            }}
             className={cn(
               'w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-colors',
               isDark ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-slate-100 text-slate-600'
             )}
           >
             <Globe className="w-5 h-5" />
-            {sidebarOpen && <span>{language === 'ru' ? 'English' : 'Русский'}</span>}
+            {sidebarOpen && (
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'px-2 py-0.5 rounded-md text-xs font-bold uppercase',
+                  language === 'ru' ? 'bg-emerald-500 text-white' : isDark ? 'bg-slate-700' : 'bg-slate-100'
+                )}>RU</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-md text-xs font-bold uppercase',
+                  language === 'en' ? 'bg-emerald-500 text-white' : isDark ? 'bg-slate-700' : 'bg-slate-100'
+                )}>EN</span>
+                <span className={cn(
+                  'px-2 py-0.5 rounded-md text-xs font-bold uppercase',
+                  language === 'kz' ? 'bg-emerald-500 text-white' : isDark ? 'bg-slate-700' : 'bg-slate-100'
+                )}>KZ</span>
+              </div>
+            )}
           </button>
 
           {/* Mobile Only: Currency Toggle */}
@@ -347,11 +365,11 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
       {/* Main Content */}
       <main className={cn(
         'flex-1 transition-all duration-300 min-h-screen w-full',
-        sidebarOpen ? 'md:ml-64' : 'md:ml-20'
+        sidebarOpen ? 'md:ml-72' : 'md:ml-20'
       )}>
         {/* Header */}
         <header className={cn(
-          'sticky top-0 z-30 px-6 py-4 border-b backdrop-blur-2xl transition-all duration-300',
+          'sticky top-0 z-30 px-3 md:px-6 py-3 md:py-4 border-b backdrop-blur-2xl transition-all duration-300',
           isDark ? 'bg-slate-950/70 border-slate-800' : 'bg-white/60 border-white/50 shadow-[0_4px_24px_rgba(0,0,0,0.02)]'
         )}>
           <div className="flex items-center justify-between">
@@ -401,6 +419,20 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
                   </button>
                 ))}
               </div>
+
+              {/* Mobile language quickswitch */}
+              <button
+                onClick={() => {
+                  const cycle: Record<string, string> = { ru: 'en', en: 'kz', kz: 'ru' };
+                  setLanguage((cycle[language] || 'ru') as any);
+                }}
+                className={cn(
+                  'md:hidden px-2 py-1 rounded-lg text-xs font-bold uppercase border',
+                  'bg-emerald-500 text-white border-emerald-400'
+                )}
+              >
+                {language.toUpperCase()}
+              </button>
 
               {!isPremium && (
                 <button
