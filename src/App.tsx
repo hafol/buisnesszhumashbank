@@ -915,7 +915,7 @@ function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: an
 
       {/* Projects Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {projects.map((project: any) => (
+        {(projects || []).filter(Boolean).map((project: any) => (
           <div
             key={project.id}
             className={cn(
@@ -951,15 +951,15 @@ function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: an
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-sm">
                   <Building className="w-4 h-4 text-slate-400" />
-                  <span>{project.contractor.name}</span>
+                  <span>{project.contractor?.name || project.contractor_name || t.noData}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <CreditCard className="w-4 h-4 text-slate-400" />
-                  <span>ИИН/БИН: {project.contractor.iinBin}</span>
+                  <span>ИИН/БИН: {project.contractor?.iinBin || project.contractor_iin || t.noData}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="w-4 h-4 text-slate-400" />
-                  <span>{project.contractor.phone}</span>
+                  <span>{project.contractor?.phone || project.contractor_phone || t.noData}</span>
                 </div>
               </div>
             </div>
@@ -968,12 +968,12 @@ function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: an
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.projectCost}</p>
-                <p className="text-2xl font-bold">₸{project.totalCost.toLocaleString()}</p>
+                <p className="text-2xl font-bold">₸{(project.totalCost || project.total_cost || 0).toLocaleString()}</p>
               </div>
               <div className="text-right">
                 <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.paid}</p>
                 <p className="text-lg font-semibold text-emerald-500">
-                  {formatCurrency((project.milestones || []).filter((m: any) => m.status === 'paid').reduce((s: number, m: any) => s + m.amount, 0))}
+                  {formatCurrency((project.milestones || []).filter((m: any) => m.status === 'paid').reduce((s: number, m: any) => s + (m.amount || 0), 0))}
                 </p>
               </div>
             </div>
@@ -984,7 +984,7 @@ function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: an
                 <div
                   className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all"
                   style={{
-                    width: `${(project.milestones.filter((m: any) => m.status === 'paid').reduce((s: number, m: any) => s + m.amount, 0) / project.totalCost) * 100}%`
+                    width: `${(project.totalCost || project.total_cost || 1) === 0 ? 0 : (((project.milestones || []).filter((m: any) => m.status === 'paid').reduce((s: number, m: any) => s + (m.amount || 0), 0) / (project.totalCost || project.total_cost || 1)) * 100)}%`
                   }}
                 />
               </div>
@@ -993,7 +993,7 @@ function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: an
             {/* Milestones */}
             <div className="space-y-2">
               <p className="text-sm font-medium">{t.milestones}</p>
-              {project.milestones.map((milestone: any, idx: number) => (
+              {(project.milestones || []).map((milestone: any, idx: number) => (
                 <div
                   key={milestone.id}
                   className={cn(
@@ -1010,24 +1010,24 @@ function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: an
                       <Clock className="w-4 h-4 text-orange-500" />
                     )}
                     <span className={milestone.status === 'paid' ? 'line-through text-slate-400' : ''}>
-                      {milestone.description}
+                      {milestone.description || milestone.name || ''}
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{milestone.dueDate}</span>
-                    <span className="font-medium">₸{milestone.amount.toLocaleString()}</span>
+                    <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{milestone.dueDate || milestone.deadline || ''}</span>
+                    <span className="font-medium">₸{(milestone.amount || 0).toLocaleString()}</span>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Documents & AI Analysis */}
-            {project.documents.length > 0 && (
+            {(project.documents || []).length > 0 && (
               <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm">{project.documents.length} документ(ов)</span>
+                    <span className="text-sm">{(project.documents || []).length} документ(ов)</span>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); analyzeContract(project); }}
@@ -1162,7 +1162,7 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
     e.preventDefault();
     setLoading(true);
     try {
-      const newProject = await projectsApi.create(formData);
+      const newProject = await projectsApi.create({ ...formData, milestones });
       onAdd(newProject);
       onClose();
     } catch (err) {
@@ -2759,8 +2759,8 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
 
 // Multi-Bank Module
 function MultiBankModule({ t, isDark, bankAccounts, formatCurrency, displayCurrency, convertToDisplayCurrency, setShowAddBank }: any) {
-  const totalInDisplay = bankAccounts.reduce((sum: number, acc: any) => {
-    return sum + convertToDisplayCurrency(acc.balance, acc.currency);
+  const totalInDisplay = (bankAccounts || []).reduce((sum: number, acc: any) => {
+    return sum + convertToDisplayCurrency(acc.balance || 0, acc.currency || 'KZT');
   }, 0);
 
   return (
@@ -2778,14 +2778,14 @@ function MultiBankModule({ t, isDark, bankAccounts, formatCurrency, displayCurre
             {formatCurrency(totalInDisplay, displayCurrency)}
           </h2>
           <p className="text-sm text-white/60">
-            {bankAccounts.length} {t.bankAccountsCount || 'банковских счетов'} • {t.displayedIn || 'Отображается в'} {displayCurrency}
+            {(bankAccounts || []).length} {t.bankAccountsCount || 'банковских счетов'} • {t.displayedIn || 'Отображается в'} {displayCurrency}
           </p>
         </div>
       </div>
 
       {/* Bank Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {bankAccounts.map((account: any) => (
+        {(bankAccounts || []).filter(Boolean).map((account: any) => (
           <div
             key={account.id}
             className={cn(
@@ -2797,14 +2797,14 @@ function MultiBankModule({ t, isDark, bankAccounts, formatCurrency, displayCurre
               <div className="flex items-center gap-3">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-                  style={{ backgroundColor: account.color }}
+                  style={{ backgroundColor: account.color || '#10b981' }}
                 >
-                  {account.bankName.charAt(0)}
+                  {(account.bankName || '?').charAt(0)}
                 </div>
                 <div>
-                  <h4 className="font-semibold">{account.bankName}</h4>
+                  <h4 className="font-semibold">{account.bankName || 'Unknown Bank'}</h4>
                   <p className={cn('text-sm font-mono', isDark ? 'text-slate-400' : 'text-slate-500')}>
-                    {account.accountNumber.slice(0, 8)}...{account.accountNumber.slice(-4)}
+                    {(account.accountNumber || '').slice(0, 8)}...{(account.accountNumber || '').slice(-4)}
                   </p>
                 </div>
               </div>
@@ -2888,30 +2888,31 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
   const [located, setLocated] = useState(false);
   const [offices, setOffices] = useState<any[]>([]);
   const [city, setCity] = useState('Almaty');
+  const [sortBy, setSortBy] = useState<'distance' | 'usd' | 'eur'>('distance');
+  const [showAll, setShowAll] = useState(false);
 
-  if (!exchangeRates) {
-    return (
-      <div className="p-6 text-center text-slate-500">
-        Загрузка данных обмена валют...
-      </div>
-    );
-  }
-
-  useEffect(() => {
-    detectLocationManual('Almaty');
-  }, []);
+  const detectLocationManual = async (manualCity: string) => {
+    setLocating(true);
+    try {
+      const results = await exchangeApi.offices(manualCity);
+      setOffices(results.offices || []);
+      setCity(manualCity);
+      setLocated(true);
+    } catch (err) {
+      console.error('Error fetching offices:', err);
+    } finally {
+      setLocating(false);
+    }
+  };
 
   const detectLocation = () => {
     setLocating(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(async (position) => {
-        // In reality, we'd use reverse geocoding to get city name
-        // For now, we'll simulate finding Astana if someone's coordinates match a rough range
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         console.log('Detected coords:', lat, lng);
 
-        // Simple mock: if lat is near Astana (rough 51.1 deg)
         const isNearAstana = Math.abs(lat - 51.1694) < 2;
         const detectedCity = isNearAstana ? 'Astana' : 'Almaty';
         setCity(detectedCity);
@@ -2928,7 +2929,6 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
       }, (error) => {
         console.warn('Geolocation failed:', error);
         setLocating(false);
-        // Fallback to Almaty
         detectLocationManual('Almaty');
       });
     } else {
@@ -2936,32 +2936,26 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
     }
   };
 
-  const detectLocationManual = async (manualCity: string) => {
-    setLocating(true);
-    try {
-      // manualCity is 'Almaty' or 'Astana'
-      const results = await exchangeApi.offices(manualCity);
-      setOffices(results.offices || []);
-      setCity(manualCity);
-      setLocated(true);
-    } catch (err) {
-      console.error('Error fetching offices:', err);
-    } finally {
-      setLocating(false);
-    }
-  };
-
-  const [sortBy, setSortBy] = useState<'distance' | 'usd' | 'eur'>('distance');
-  const [showAll, setShowAll] = useState(false);
+  useEffect(() => {
+    detectLocationManual('Almaty');
+  }, []);
 
   const sortedOffices = [...offices].sort((a, b) => {
-    if (sortBy === 'distance') return a.numericDistance - b.numericDistance;
-    if (sortBy === 'usd') return b.rates.usdBuy - a.rates.usdBuy;
-    if (sortBy === 'eur') return b.rates.eurBuy - a.rates.eurBuy;
+    if (sortBy === 'distance') return (a.numericDistance || 0) - (b.numericDistance || 0);
+    if (sortBy === 'usd') return (b.rates?.usdBuy || 0) - (a.rates?.usdBuy || 0);
+    if (sortBy === 'eur') return (b.rates?.eurBuy || 0) - (a.rates?.eurBuy || 0);
     return 0;
   });
 
   const displayedOffices = showAll ? sortedOffices : sortedOffices.slice(0, 8);
+
+  if (!exchangeRates) {
+    return (
+      <div className="p-6 text-center text-slate-500">
+        Загрузка данных обмена валют...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
