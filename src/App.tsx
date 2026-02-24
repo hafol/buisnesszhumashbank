@@ -880,6 +880,17 @@ function DashboardModule({
 
 // Projects Module
 function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: any) {
+  const handleDeleteProject = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Удалить этот проект?')) return;
+    try {
+      await projectsApi.delete(id);
+      setProjects((prev: any[]) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error('Error deleting project:', err);
+      alert('Ошибка при удалении проекта');
+    }
+  };
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
   const [aiAnalyzing, setAiAnalyzing] = useState(false);
@@ -932,14 +943,26 @@ function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: an
                   {project.description}
                 </p>
               </div>
-              <span className={cn(
-                'text-xs px-3 py-1 rounded-full font-medium',
-                project.status === 'active' && 'bg-emerald-500/20 text-emerald-500',
-                project.status === 'completed' && 'bg-blue-500/20 text-blue-500',
-                project.status === 'paused' && 'bg-orange-500/20 text-orange-500'
-              )}>
-                {project.status === 'active' ? t.active : project.status === 'completed' ? t.completed : t.paused}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  'text-xs px-3 py-1 rounded-full font-medium',
+                  project.status === 'active' && 'bg-emerald-500/20 text-emerald-500',
+                  project.status === 'completed' && 'bg-blue-500/20 text-blue-500',
+                  project.status === 'paused' && 'bg-orange-500/20 text-orange-500'
+                )}>
+                  {project.status === 'active' ? t.active : project.status === 'completed' ? t.completed : t.paused}
+                </span>
+                <button
+                  onClick={(e) => handleDeleteProject(project.id, e)}
+                  className={cn(
+                    'p-1.5 rounded-lg transition-colors',
+                    isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-400 hover:bg-red-50 hover:text-red-600'
+                  )}
+                  title="Удалить проект"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Contractor Info */}
@@ -2758,7 +2781,17 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
 }
 
 // Multi-Bank Module
-function MultiBankModule({ t, isDark, bankAccounts, formatCurrency, displayCurrency, convertToDisplayCurrency, setShowAddBank }: any) {
+function MultiBankModule({ t, isDark, bankAccounts, setBankAccounts, formatCurrency, displayCurrency, convertToDisplayCurrency, setShowAddBank }: any) {
+  const handleDeleteBank = async (id: string) => {
+    if (!confirm('Удалить этот банковский счёт?')) return;
+    try {
+      await bankAccountsApi.delete(id);
+      setBankAccounts((prev: any[]) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error('Error deleting bank account:', err);
+      alert('Ошибка при удалении счёта');
+    }
+  };
   const totalInDisplay = (bankAccounts || []).reduce((sum: number, acc: any) => {
     return sum + convertToDisplayCurrency(acc.balance || 0, acc.currency || 'KZT');
   }, 0);
@@ -2843,12 +2876,15 @@ function MultiBankModule({ t, isDark, bankAccounts, formatCurrency, displayCurre
                 <ArrowLeftRight className="w-4 h-4" />
                 {t.viewTransactions || 'Посмотреть операции'}
               </button>
-              <button className={cn(
-                'text-sm font-medium flex items-center gap-1',
-                'text-emerald-500 hover:text-emerald-600'
-              )}>
-                <RefreshCw className="w-4 h-4" />
-                Обновить
+              <button
+                onClick={() => handleDeleteBank(account.id)}
+                className={cn(
+                  'text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors',
+                  isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-500 hover:bg-red-50'
+                )}
+              >
+                <Trash2 className="w-4 h-4" />
+                Удалить
               </button>
             </div>
           </div>
