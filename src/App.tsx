@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, FolderKanban, Receipt, Calculator, FileText,
   Building2, ArrowLeftRight, Menu, X, Sun, Moon,
@@ -43,7 +43,7 @@ export function App() {
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white/60">Р—Р°РіСЂСѓР·РєР°...</p>
+          <p className="text-white/60">Загрузка...</p>
         </div>
       </div>
     );
@@ -89,7 +89,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
       setShowAddBank(false);
     } catch (err) {
       console.error('Error adding bank account:', err);
-      alert('РћС€РёР±РєР° РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё СЃС‡РµС‚Р°');
+      alert('Ошибка при добавлении счета');
     }
   };
 
@@ -107,20 +107,20 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
       // Create sample project
       await projectsApi.create({
-        name: 'РњРѕР±РёР»СЊРґС– Т›РѕСЃС‹РјС€Р°РЅС‹ У™Р·С–СЂР»РµСѓ',
+        name: 'Мобильді қосымшаны әзірлеу',
         clientName: 'Digital Solutions LLP',
         totalCost: 5000000,
         currency: 'KZT',
         status: 'active',
         contractor: {
-          name: 'РРІР°РЅ РРІР°РЅРѕРІ',
+          name: 'Иван Иванов',
           email: 'ivan@example.com',
           phone: '+7 701 123 4567'
         },
         milestones: [
-          { name: 'Р”РёР·Р°Р№РЅ', amount: 1000000, status: 'paid', deadline: '2024-03-01' },
-          { name: 'УР·С–СЂР»РµСѓ', amount: 3000000, status: 'pending', deadline: '2024-05-01' },
-          { name: 'РўРµСЃС‚С–Р»РµСѓ', amount: 1000000, status: 'pending', deadline: '2024-06-01' }
+          { name: 'Дизайн', amount: 1000000, status: 'paid', deadline: '2024-03-01' },
+          { name: 'Әзірлеу', amount: 3000000, status: 'pending', deadline: '2024-05-01' },
+          { name: 'Тестілеу', amount: 1000000, status: 'pending', deadline: '2024-06-01' }
         ]
       });
 
@@ -140,7 +140,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
     } catch (err) {
       console.error('Error filling demo data:', err);
-      alert('РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё РґРµРјРѕ-РґР°РЅРЅС‹С…');
+      alert('Ошибка при создании демо-данных');
     } finally {
       setCreatingDemo(false);
     }
@@ -177,13 +177,13 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
 
   const modules = [
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
-    { id: 'businesses', icon: Building, label: t.businesses || 'РњРѕРё Р‘РёР·РЅРµСЃС‹' },
+    { id: 'businesses', icon: Building, label: t.businesses || 'Мои Бизнесы' },
     { id: 'projects', icon: FolderKanban, label: t.projects },
     { id: 'cashRegister', icon: Receipt, label: t.cashRegister },
     { id: 'taxAccountant', icon: Calculator, label: t.taxAccountant, isPremium: true },
     { id: 'bankStatements', icon: FileText, label: t.bankStatements, isPremium: true },
     { id: 'documents', icon: FileSearch, label: t.documents, isPremium: true },
-    { id: 'docGen', icon: Printer, label: t.docGenerator || 'Р“РµРЅРµСЂР°С‚РѕСЂ', isPremium: true },
+    { id: 'docGen', icon: Printer, label: t.docGenerator || 'Генератор', isPremium: true },
     { id: 'banks', icon: Building2, label: t.banks },
     { id: 'exchange', icon: ArrowLeftRight, label: t.exchange },
   ];
@@ -200,7 +200,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
   };
 
   const formatCurrency = (amount: number, currency: Currency = displayCurrency): string => {
-    const symbols: Record<Currency, string> = { KZT: 'в‚ё', USD: '$', EUR: 'в‚¬', RUB: 'в‚Ѕ' };
+    const symbols: Record<Currency, string> = { KZT: '₸', USD: '$', EUR: '€', RUB: '₽' };
     return `${symbols[currency]}${amount.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
@@ -357,7 +357,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
             )}
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium text-left">Р’С‹Р№С‚Рё</span>
+            <span className="font-medium text-left">Выйти</span>
           </button>
         </div>
       </aside>
@@ -386,7 +386,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
               <div>
                 <h2 className="text-xl md:text-2xl font-bold line-clamp-1">{modules.find(m => m.id === activeModule)?.label}</h2>
                 <p className={cn('text-xs md:text-sm', isDark ? 'text-slate-400' : 'text-slate-500', 'line-clamp-1')}>
-                  {user?.company} вЂў {user?.iin}
+                  {user?.company} • {user?.iin}
                 </p>
               </div>
             </div>
@@ -642,10 +642,10 @@ function AddBankModal({ t, isDark, onClose, onAdd }: any) {
                   isDark ? 'bg-slate-700 border-slate-600 focus:ring-emerald-500' : 'bg-slate-50 border-slate-200 focus:ring-emerald-500'
                 )}
               >
-                <option value="KZT">KZT (в‚ё)</option>
+                <option value="KZT">KZT (₸)</option>
                 <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (в‚¬)</option>
-                <option value="RUB">RUB (в‚Ѕ)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="RUB">RUB (₽)</option>
               </select>
             </div>
             <div>
@@ -925,461 +925,293 @@ function DashboardModule({
 
 // Projects Module
 function ProjectsModule({ t, isDark, projects, setProjects, formatCurrency }: any) {
-  const [activeProject, setActiveProject] = useState<any>(null);
-  const [showNewProject, setShowNewProject] = useState(false);
-
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteProject = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('РЈРґР°Р»РёС‚СЊ СЌС‚РѕС‚ РїСЂРѕРµРєС‚?')) return;
+    if (!confirm('Удалить этот проект?')) return;
     try {
       await projectsApi.delete(id);
       setProjects((prev: any[]) => prev.filter((p) => p.id !== id));
-      if (activeProject?.id === id) setActiveProject(null);
-    } catch {
-      alert('РћС€РёР±РєР° РїСЂРё СѓРґР°Р»РµРЅРёРё РїСЂРѕРµРєС‚Р°');
+    } catch (err) {
+      console.error('Error deleting project:', err);
+      alert('Ошибка при удалении проекта');
     }
   };
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(null);
 
-  if (activeProject) {
-    return (
-      <ProjectDetailView
-        project={activeProject}
-        isDark={isDark}
-        t={t}
-        formatCurrency={formatCurrency}
-        onBack={() => setActiveProject(null)}
-        onUpdate={(updated: any) => {
-          setActiveProject(updated);
-          setProjects((prev: any[]) => prev.map((p) => p.id === updated.id ? updated : p));
-        }}
-      />
-    );
-  }
+  const analyzeContract = async (project: Project) => {
+    setAiAnalyzing(true);
+    // Simulate AI analysis
+    setTimeout(() => {
+      setAiResult(project.documents[0]?.aiAnalysis);
+      setAiAnalyzing(false);
+    }, 2000);
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-semibold">{t.projectManagement}</h3>
-          <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.projectsSubtitle}</p>
+          <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>
+            Управляйте проектами и этапами оплаты
+          </p>
         </div>
         <button
           onClick={() => setShowNewProject(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-lg hover:scale-105 transition-all font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-lg transition-all"
         >
           <Plus className="w-5 h-5" />
           {t.newProject}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {(projects || []).filter(Boolean).map((project: any) => {
-          const contractorName = project.contractor_name || project.contractorName || '';
-          const contractorIin = project.contractor_iin || project.contractorIin || '';
-          const contractorPhone = project.contractor_phone || project.contractorPhone || '';
-          const totalCost = Number(project.total_cost || project.totalCost || 0);
-          const milestones = project.milestones || [];
-          const paidAmount = milestones.filter((m: any) => m.status === 'paid').reduce((s: number, m: any) => s + Number(m.amount || 0), 0);
-          const progress = totalCost > 0 ? Math.min(100, (paidAmount / totalCost) * 100) : 0;
-
-          return (
-            <div
-              key={project.id}
-              onClick={() => setActiveProject(project)}
-              className={cn(
-                'p-5 rounded-2xl border cursor-pointer transition-all hover:shadow-xl hover:scale-[1.01] group relative',
-                isDark ? 'bg-slate-800 border-slate-700 hover:border-emerald-500/40' : 'bg-white border-slate-200 hover:border-emerald-400/40'
-              )}
-            >
-              {/* Delete */}
-              <button
-                onClick={(e) => handleDelete(project.id, e)}
-                className={cn('absolute top-3 right-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all', isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-400 hover:bg-red-50')}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-
-              <div className="flex items-start justify-between mb-3 pr-8">
-                <div>
-                  <h4 className="text-lg font-bold">{project.name}</h4>
-                  <p className={cn('text-sm mt-0.5 line-clamp-2', isDark ? 'text-slate-400' : 'text-slate-500')}>{project.description}</p>
-                </div>
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {(projects || []).filter(Boolean).map((project: any) => (
+          <div
+            key={project.id}
+            className={cn(
+              'p-6 rounded-2xl border transition-all hover:shadow-lg cursor-pointer',
+              isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200',
+              selectedProject?.id === project.id && 'ring-2 ring-emerald-500'
+            )}
+            onClick={() => setSelectedProject(project)}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h4 className="text-lg font-semibold">{project.name}</h4>
+                <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>
+                  {project.description}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
                 <span className={cn(
-                  'text-xs px-2.5 py-1 rounded-full font-medium ml-2 flex-shrink-0',
-                  project.status === 'active' && 'bg-emerald-500/15 text-emerald-500',
-                  project.status === 'completed' && 'bg-blue-500/15 text-blue-500',
-                  project.status === 'paused' && 'bg-orange-500/15 text-orange-500'
+                  'text-xs px-3 py-1 rounded-full font-medium',
+                  project.status === 'active' && 'bg-emerald-500/20 text-emerald-500',
+                  project.status === 'completed' && 'bg-blue-500/20 text-blue-500',
+                  project.status === 'paused' && 'bg-orange-500/20 text-orange-500'
                 )}>
                   {project.status === 'active' ? t.active : project.status === 'completed' ? t.completed : t.paused}
                 </span>
-              </div>
-
-              {/* Contractor compact */}
-              <div className={cn('px-3 py-2 rounded-xl mb-3 text-xs space-y-1', isDark ? 'bg-slate-700/50' : 'bg-slate-50')}>
-                <div className="flex items-center gap-2">
-                  <Building className="w-3.5 h-3.5 text-slate-400" />
-                  <span className={contractorName ? '' : 'text-slate-400'}>{contractorName || t.noData}</span>
-                </div>
-                <div className="flex gap-4">
-                  <span className={cn('flex items-center gap-1', !contractorIin && 'text-slate-400')}>
-                    <CreditCard className="w-3.5 h-3.5 text-slate-400" />
-                    {contractorIin || 'РРРќ: вЂ”'}
-                  </span>
-                  <span className={cn('flex items-center gap-1', !contractorPhone && 'text-slate-400')}>
-                    <Phone className="w-3.5 h-3.5 text-slate-400" />
-                    {contractorPhone || 'вЂ”'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Cost + Progress */}
-              <div className="flex items-center justify-between mb-2 text-sm">
-                <span className="font-bold text-base">{formatCurrency(totalCost)}</span>
-                <span className="text-emerald-500 font-medium">{t.paid}: {formatCurrency(paidAmount)}</span>
-              </div>
-              <div className="h-2 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden mb-3">
-                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
-              </div>
-
-              {/* Milestones preview */}
-              <div className="space-y-1.5">
-                {milestones.slice(0, 3).map((m: any) => (
-                  <div key={m.id} className={cn('flex items-center justify-between px-3 py-1.5 rounded-lg text-xs', isDark ? 'bg-slate-700/40' : 'bg-slate-50')}>
-                    <div className="flex items-center gap-1.5">
-                      {m.status === 'paid' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : m.status === 'overdue' ? <AlertCircle className="w-3.5 h-3.5 text-red-500" /> : <Clock className="w-3.5 h-3.5 text-orange-400" />}
-                      <span className={m.status === 'paid' ? 'line-through text-slate-400' : ''}>{m.description || m.name}</span>
-                    </div>
-                    <span className="font-medium">в‚ё{Number(m.amount || 0).toLocaleString()}</span>
-                  </div>
-                ))}
-                {milestones.length > 3 && <p className="text-xs text-center text-slate-400">+{milestones.length - 3} РµС‰С‘</p>}
-              </div>
-
-              <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
-                <span className={cn('text-xs', isDark ? 'text-slate-500' : 'text-slate-400')}>РћС‚РєСЂС‹С‚СЊ в†’</span>
-                <span className="text-xs text-emerald-500 font-medium">{milestones.length} СЌС‚Р°РїРѕРІ</span>
+                <button
+                  onClick={(e) => handleDeleteProject(project.id, e)}
+                  className={cn(
+                    'p-1.5 rounded-lg transition-colors',
+                    isDark ? 'text-red-400 hover:bg-red-500/10' : 'text-red-400 hover:bg-red-50 hover:text-red-600'
+                  )}
+                  title="Удалить проект"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
-          );
-        })}
 
-        {/* Add card */}
-        <div
-          onClick={() => setShowNewProject(true)}
-          className={cn('p-5 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center min-h-[220px] cursor-pointer transition-all', isDark ? 'border-slate-600 hover:border-emerald-500 hover:bg-slate-800/50' : 'border-slate-300 hover:border-emerald-400 hover:bg-slate-50')}
-        >
-          <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-3', isDark ? 'bg-slate-700' : 'bg-slate-100')}>
-            <Plus className="w-6 h-6 text-emerald-500" />
+            {/* Contractor Info */}
+            <div className={cn(
+              'p-4 rounded-xl mb-4',
+              isDark ? 'bg-slate-700/50' : 'bg-slate-50'
+            )}>
+              <p className="text-sm font-medium mb-2">{t.contractor}</p>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm">
+                  <Building className="w-4 h-4 text-slate-400" />
+                  <span>{project.contractor?.name || project.contractor_name || t.noData}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CreditCard className="w-4 h-4 text-slate-400" />
+                  <span>ИИН/БИН: {project.contractor?.iinBin || project.contractor_iin || t.noData}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="w-4 h-4 text-slate-400" />
+                  <span>{project.contractor?.phone || project.contractor_phone || t.noData}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Cost & Progress */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.projectCost}</p>
+                <p className="text-2xl font-bold">₸{(project.totalCost || project.total_cost || 0).toLocaleString()}</p>
+              </div>
+              <div className="text-right">
+                <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.paid}</p>
+                <p className="text-lg font-semibold text-emerald-500">
+                  {formatCurrency((project.milestones || []).filter((m: any) => m.status === 'paid').reduce((s: number, m: any) => s + (m.amount || 0), 0))}
+                </p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all"
+                  style={{
+                    width: `${(project.totalCost || project.total_cost || 1) === 0 ? 0 : (((project.milestones || []).filter((m: any) => m.status === 'paid').reduce((s: number, m: any) => s + (m.amount || 0), 0) / (project.totalCost || project.total_cost || 1)) * 100)}%`
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Milestones */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium">{t.milestones}</p>
+              {(project.milestones || []).map((milestone: any, idx: number) => (
+                <div
+                  key={milestone.id}
+                  className={cn(
+                    'flex items-center justify-between p-3 rounded-lg text-sm',
+                    isDark ? 'bg-slate-700/50' : 'bg-slate-100'
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    {milestone.status === 'paid' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    ) : milestone.status === 'overdue' ? (
+                      <AlertCircle className="w-4 h-4 text-red-500" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-orange-500" />
+                    )}
+                    <span className={milestone.status === 'paid' ? 'line-through text-slate-400' : ''}>
+                      {milestone.description || milestone.name || ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{milestone.dueDate || milestone.deadline || ''}</span>
+                    <span className="font-medium">₸{(milestone.amount || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Documents & AI Analysis */}
+            {(project.documents || []).length > 0 && (
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm">{(project.documents || []).length} документ(ов)</span>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); analyzeContract(project); }}
+                    disabled={aiAnalyzing}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                      aiAnalyzing
+                        ? 'bg-purple-500/20 text-purple-400 cursor-wait'
+                        : 'bg-purple-500/10 text-purple-500 hover:bg-purple-500/20'
+                    )}
+                  >
+                    <Sparkles className={cn('w-4 h-4', aiAnalyzing && 'animate-pulse')} />
+                    {aiAnalyzing ? t.aiAnalyzing : t.analyzeContract}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-          <p className="font-semibold">{t.newProject}</p>
-        </div>
+        ))}
       </div>
 
+      {/* AI Analysis Modal */}
+      {aiResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={cn(
+            'w-full max-w-2xl rounded-2xl p-6 max-h-[80vh] overflow-y-auto',
+            isDark ? 'bg-slate-800' : 'bg-white'
+          )}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-purple-500/10">
+                  <Bot className="w-6 h-6 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">{t.aiSummary}</h3>
+                  <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>
+                    Анализ контракта выполнен ИИ
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setAiResult(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className={cn('p-4 rounded-xl', isDark ? 'bg-slate-700' : 'bg-slate-50')}>
+                <h4 className="font-medium mb-2">Резюме</h4>
+                <p className={cn('text-sm', isDark ? 'text-slate-300' : 'text-slate-600')}>{aiResult.summary}</p>
+              </div>
+
+              <div className={cn('p-4 rounded-xl', isDark ? 'bg-slate-700' : 'bg-slate-50')}>
+                <h4 className="font-medium mb-2">{t.keyTerms}</h4>
+                <ul className="space-y-1">
+                  {aiResult.keyTerms.map((term: string, idx: number) => (
+                    <li key={idx} className={cn('text-sm flex items-start gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                      {term}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className={cn('p-4 rounded-xl', isDark ? 'bg-slate-700' : 'bg-slate-50')}>
+                <h4 className="font-medium mb-2">{t.obligations}</h4>
+                <ul className="space-y-1">
+                  {aiResult.obligations.map((obl: string, idx: number) => (
+                    <li key={idx} className={cn('text-sm flex items-start gap-2', isDark ? 'text-slate-300' : 'text-slate-600')}>
+                      <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                      {obl}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className={cn('p-4 rounded-xl bg-red-500/10 border border-red-500/20')}>
+                <h4 className="font-medium mb-2 text-red-500">{t.risks}</h4>
+                <ul className="space-y-1">
+                  {aiResult.risks.map((risk: string, idx: number) => (
+                    <li key={idx} className="text-sm flex items-start gap-2 text-red-400">
+                      <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      {risk}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className={cn('p-4 rounded-xl', isDark ? 'bg-slate-700' : 'bg-slate-50')}>
+                <h4 className="font-medium mb-2">Ключевые даты</h4>
+                <div className="space-y-2">
+                  {aiResult.deadlines.map((dl: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between text-sm">
+                      <span className={isDark ? 'text-slate-300' : 'text-slate-600'}>{dl.description}</span>
+                      <span className="font-medium">{dl.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Project Modal */}
       {showNewProject && (
         <NewProjectModal
           isDark={isDark}
           t={t}
           onClose={() => setShowNewProject(false)}
-          onAdd={(p: any) => { setProjects((prev: any[]) => [p, ...prev]); setActiveProject(p); }}
+          onAdd={(p: any) => setProjects([p, ...projects])}
         />
       )}
     </div>
   );
 }
 
-// ---- Project Detail View ----
-function ProjectDetailView({ project, isDark, t, formatCurrency, onBack, onUpdate }: any) {
-  const [milestones, setMilestones] = useState<any[]>(project.milestones || []);
-  const [status, setStatus] = useState(project.status || 'active');
-  const [showAddMilestone, setShowAddMilestone] = useState(false);
-  const [newMs, setNewMs] = useState({ description: '', amount: '', dueDate: '' });
-  const [savingMs, setSavingMs] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
-
-  const contractorName = project.contractor_name || project.contractorName || '';
-  const contractorIin = project.contractor_iin || project.contractorIin || '';
-  const contractorPhone = project.contractor_phone || project.contractorPhone || '';
-  const contractorEmail = project.contractor_email || project.contractorEmail || '';
-  const totalCost = Number(project.total_cost || project.totalCost || 0);
-  const paidAmount = milestones.filter(m => m.status === 'paid').reduce((s, m) => s + Number(m.amount || 0), 0);
-  const progress = totalCost > 0 ? Math.min(100, (paidAmount / totalCost) * 100) : 0;
-
-  const toggleMilestoneStatus = async (m: any) => {
-    const next = m.status === 'paid' ? 'pending' : m.status === 'pending' ? 'paid' : 'paid';
-    try {
-      await projectsApi.updateMilestone(m.id, next);
-      const updated = milestones.map(ms => ms.id === m.id ? { ...ms, status: next } : ms);
-      setMilestones(updated);
-      onUpdate({ ...project, milestones: updated });
-    } catch {
-      alert('РћС€РёР±РєР° РёР·РјРµРЅРµРЅРёСЏ СЃС‚Р°С‚СѓСЃР°');
-    }
-  };
-
-  const handleChangeStatus = async (newStatus: string) => {
-    setUpdatingStatus(true);
-    try {
-      await projectsApi.update(project.id, { name: project.name, description: project.description, totalCost, status: newStatus });
-      setStatus(newStatus);
-      onUpdate({ ...project, milestones, status: newStatus });
-    } catch {
-      alert('РћС€РёР±РєР° РёР·РјРµРЅРµРЅРёСЏ СЃС‚Р°С‚СѓСЃР° РїСЂРѕРµРєС‚Р°');
-    } finally {
-      setUpdatingStatus(false);
-    }
-  };
-
-  const handleAddMilestone = async () => {
-    if (!newMs.description || !newMs.amount) return alert('Р’РІРµРґРёС‚Рµ РѕРїРёСЃР°РЅРёРµ Рё СЃСѓРјРјСѓ');
-    setSavingMs(true);
-    try {
-      // Add via re-create isn't possible, so we use a POST to milestones endpoint workaround.
-      // We store it locally + update project via PUT with new data
-      const tempId = Date.now().toString();
-      const ms = { id: tempId, project_id: project.id, description: newMs.description, amount: Number(newMs.amount), due_date: newMs.dueDate, status: 'pending' };
-      // Use the milestones patch endpoint isn't available for insert. We call backend directly:
-      const res = await fetch(`/api/projects/${project.id}/milestones`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ description: newMs.description, amount: Number(newMs.amount), dueDate: newMs.dueDate }),
-      });
-      const saved = res.ok ? await res.json() : ms;
-      const updated = [...milestones, saved];
-      setMilestones(updated);
-      onUpdate({ ...project, milestones: updated });
-      setNewMs({ description: '', amount: '', dueDate: '' });
-      setShowAddMilestone(false);
-    } catch {
-      alert('РћС€РёР±РєР° РґРѕР±Р°РІР»РµРЅРёСЏ СЌС‚Р°РїР°');
-    } finally {
-      setSavingMs(false);
-    }
-  };
-
-  const handleDeleteMilestone = async (id: string) => {
-    if (!confirm('РЈРґР°Р»РёС‚СЊ СЌС‚РѕС‚ СЌС‚Р°Рї?')) return;
-    try {
-      await fetch(`/api/projects/milestones/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      const updated = milestones.filter(m => m.id !== id);
-      setMilestones(updated);
-      onUpdate({ ...project, milestones: updated });
-    } catch {
-      alert('РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ СЌС‚Р°РїР°');
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Back */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={onBack}
-          className={cn('flex items-center gap-2 px-4 py-2 rounded-xl font-medium', isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-50 border border-slate-200')}
-        >в†ђ {t.cancel || 'РќР°Р·Р°Рґ'}</button>
-        <div className="flex-1">
-          <h2 className="text-xl font-bold">{project.name}</h2>
-          <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{project.description}</p>
-        </div>
-        {/* Status selector */}
-        <div className="flex items-center gap-2">
-          {(['active', 'completed', 'paused'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => handleChangeStatus(s)}
-              disabled={updatingStatus}
-              className={cn(
-                'px-3 py-1.5 rounded-xl text-xs font-medium transition-all',
-                status === s
-                  ? s === 'active' ? 'bg-emerald-500 text-white' : s === 'completed' ? 'bg-blue-500 text-white' : 'bg-orange-500 text-white'
-                  : isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              )}
-            >
-              {s === 'active' ? t.active : s === 'completed' ? t.completed : t.paused}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left 2/3: milestones */}
-        <div className="xl:col-span-2 space-y-5">
-          {/* Progress */}
-          <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.projectCost}</p>
-                <p className="text-3xl font-bold">{formatCurrency(totalCost)}</p>
-              </div>
-              <div className="text-right">
-                <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.paid}</p>
-                <p className="text-2xl font-bold text-emerald-500">{formatCurrency(paidAmount)}</p>
-              </div>
-            </div>
-            <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
-            </div>
-            <p className={cn('text-xs text-right mt-1', isDark ? 'text-slate-500' : 'text-slate-400')}>{progress.toFixed(0)}% РѕРїР»Р°С‡РµРЅРѕ</p>
-          </div>
-
-          {/* Milestones */}
-          <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">{t.milestones}</h3>
-              <button
-                onClick={() => setShowAddMilestone(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg text-sm font-medium"
-              >
-                <Plus className="w-4 h-4" /> {t.addMilestone}
-              </button>
-            </div>
-
-            {/* Add milestone form */}
-            {showAddMilestone && (
-              <div className={cn('p-4 rounded-xl mb-4 border', isDark ? 'bg-slate-700 border-slate-600' : 'bg-emerald-50 border-emerald-200')}>
-                <p className="text-sm font-medium mb-3">РќРѕРІС‹Р№ СЌС‚Р°Рї РїР»Р°С‚РµР¶Р°</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input
-                    value={newMs.description}
-                    onChange={e => setNewMs({ ...newMs, description: e.target.value })}
-                    placeholder="РћРїРёСЃР°РЅРёРµ СЌС‚Р°РїР°"
-                    className={cn('px-3 py-2 rounded-xl border outline-none text-sm col-span-1 sm:col-span-1', isDark ? 'bg-slate-600 border-slate-500' : 'bg-white border-slate-200')}
-                  />
-                  <input
-                    type="number"
-                    value={newMs.amount}
-                    onChange={e => setNewMs({ ...newMs, amount: e.target.value })}
-                    placeholder="РЎСѓРјРјР° в‚ё"
-                    className={cn('px-3 py-2 rounded-xl border outline-none text-sm', isDark ? 'bg-slate-600 border-slate-500' : 'bg-white border-slate-200')}
-                  />
-                  <input
-                    type="date"
-                    value={newMs.dueDate}
-                    onChange={e => setNewMs({ ...newMs, dueDate: e.target.value })}
-                    className={cn('px-3 py-2 rounded-xl border outline-none text-sm', isDark ? 'bg-slate-600 border-slate-500' : 'bg-white border-slate-200')}
-                  />
-                </div>
-                <div className="flex gap-2 mt-3">
-                  <button onClick={() => setShowAddMilestone(false)} className={cn('px-4 py-2 rounded-xl text-sm', isDark ? 'bg-slate-600' : 'bg-slate-100')}>РћС‚РјРµРЅР°</button>
-                  <button
-                    onClick={handleAddMilestone}
-                    disabled={savingMs}
-                    className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm font-medium disabled:opacity-50"
-                  >{savingMs ? 'РЎРѕС…СЂР°РЅРµРЅРёРµ...' : 'Р”РѕР±Р°РІРёС‚СЊ'}</button>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              {milestones.length === 0 && (
-                <div className="text-center py-8">
-                  <Clock className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400">РќРµС‚ СЌС‚Р°РїРѕРІ. Р”РѕР±Р°РІСЊС‚Рµ РїРµСЂРІС‹Р№ СЌС‚Р°Рї РѕРїР»Р°С‚С‹.</p>
-                </div>
-              )}
-              {milestones.map((m: any) => (
-                <div key={m.id} className={cn('flex items-center justify-between p-4 rounded-xl group', isDark ? 'bg-slate-700/50' : 'bg-slate-50')}>
-                  <div className="flex items-center gap-3 flex-1">
-                    <button
-                      onClick={() => toggleMilestoneStatus(m)}
-                      className={cn(
-                        'w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0',
-                        m.status === 'paid'
-                          ? 'bg-emerald-500 border-emerald-500'
-                          : m.status === 'overdue'
-                            ? 'border-red-400 bg-red-50'
-                            : 'border-slate-300 hover:border-emerald-400'
-                      )}
-                      title="РќР°Р¶РјРёС‚Рµ С‡С‚РѕР±С‹ РёР·РјРµРЅРёС‚СЊ СЃС‚Р°С‚СѓСЃ"
-                    >
-                      {m.status === 'paid' && <CheckCircle2 className="w-4 h-4 text-white" />}
-                      {m.status === 'overdue' && <AlertCircle className="w-4 h-4 text-red-500" />}
-                    </button>
-                    <div className="flex-1">
-                      <p className={cn('font-medium text-sm', m.status === 'paid' && 'line-through text-slate-400')}>
-                        {m.description || m.name}
-                      </p>
-                      {(m.due_date || m.dueDate) && (
-                        <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>РґРѕ {m.due_date || m.dueDate}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="font-bold">в‚ё{Number(m.amount || 0).toLocaleString()}</p>
-                      <span className={cn(
-                        'text-xs px-2 py-0.5 rounded-full',
-                        m.status === 'paid' ? 'bg-emerald-500/15 text-emerald-500' :
-                          m.status === 'overdue' ? 'bg-red-500/15 text-red-500' : 'bg-orange-500/15 text-orange-500'
-                      )}>
-                        {m.status === 'paid' ? t.paid : m.status === 'overdue' ? t.overdue : t.pending}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteMilestone(m.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 text-red-400 hover:bg-red-50 rounded-lg transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right 1/3: contractor info */}
-        <div className="space-y-5">
-          <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
-            <h3 className="font-bold mb-4 flex items-center gap-2">
-              <Building className="w-5 h-5 text-emerald-500" />
-              {t.contractor}
-            </h3>
-            <div className="space-y-3">
-              {[
-                { icon: Building, label: 'РќР°Р·РІР°РЅРёРµ', value: contractorName },
-                { icon: CreditCard, label: 'РРРќ/Р‘РРќ', value: contractorIin },
-                { icon: Phone, label: 'РўРµР»РµС„РѕРЅ', value: contractorPhone },
-                { icon: MessageSquare, label: 'Email', value: contractorEmail },
-              ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className={cn('flex items-start gap-3 p-3 rounded-xl', isDark ? 'bg-slate-700/50' : 'bg-slate-50')}>
-                  <Icon className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className={cn('text-xs', isDark ? 'text-slate-500' : 'text-slate-400')}>{label}</p>
-                    <p className={cn('text-sm font-medium', !value && 'text-slate-400 italic')}>{value || 'РќРµ СѓРєР°Р·Р°РЅРѕ'}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
-            <h3 className="font-bold mb-4">РЎС‚Р°С‚РёСЃС‚РёРєР°</h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Р’СЃРµРіРѕ СЌС‚Р°РїРѕРІ', value: milestones.length },
-                { label: 'РћРїР»Р°С‡РµРЅРѕ', value: milestones.filter(m => m.status === 'paid').length },
-                { label: 'РћР¶РёРґР°РµС‚', value: milestones.filter(m => m.status === 'pending').length },
-                { label: 'РџСЂРѕСЃСЂРѕС‡РµРЅРѕ', value: milestones.filter(m => m.status === 'overdue').length },
-              ].map(s => (
-                <div key={s.label} className="flex items-center justify-between text-sm">
-                  <span className={isDark ? 'text-slate-400' : 'text-slate-500'}>{s.label}</span>
-                  <span className="font-bold">{s.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-// New Project Modal Component
 // New Project Modal Component
 function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
   const [loading, setLoading] = useState(false);
@@ -1398,21 +1230,12 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
     e.preventDefault();
     setLoading(true);
     try {
-      const newProject = await projectsApi.create({
-        name: formData.name,
-        description: formData.description,
-        totalCost: formData.total_cost,
-        contractorName: formData.contractor_name,
-        contractorIin: formData.contractor_iin,
-        contractorPhone: formData.contractor_phone,
-        contractorEmail: formData.contractor_email,
-        milestones,
-      });
+      const newProject = await projectsApi.create({ ...formData, milestones });
       onAdd(newProject);
       onClose();
     } catch (err) {
       console.error('Error creating project:', err);
-      alert('РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё РїСЂРѕРµРєС‚Р°');
+      alert('Ошибка при создании проекта');
     } finally {
       setLoading(false);
     }
@@ -1440,7 +1263,7 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="РќР°РїСЂРёРјРµСЂ: Р РµРјРѕРЅС‚ РѕС„РёСЃР°"
+                placeholder="Например: Ремонт офиса"
                 className={cn(
                   'w-full px-4 py-3 rounded-xl border outline-none transition-all focus:ring-2 focus:ring-emerald-500',
                   isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'
@@ -1453,7 +1276,7 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
                 rows={2}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="РћРїРёСЃР°РЅРёРµ РїСЂРѕРµРєС‚Р°..."
+                placeholder="Описание проекта..."
                 className={cn(
                   'w-full px-4 py-3 rounded-xl border outline-none transition-all focus:ring-2 focus:ring-emerald-500 resize-none',
                   isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'
@@ -1485,7 +1308,7 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
                   type="text"
                   value={formData.contractor_name}
                   onChange={(e) => setFormData({ ...formData, contractor_name: e.target.value })}
-                  placeholder="РўРћРћ/РРџ РЅР°Р·РІР°РЅРёРµ"
+                  placeholder="ТОО/ИП название"
                   className={cn(
                     'w-full px-4 py-3 rounded-xl border outline-none transition-all focus:ring-2 focus:ring-emerald-500',
                     isDark ? 'bg-slate-600 border-slate-500' : 'bg-white border-slate-200'
@@ -1498,7 +1321,7 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
                   type="text"
                   value={formData.contractor_iin}
                   onChange={(e) => setFormData({ ...formData, contractor_iin: e.target.value })}
-                  placeholder="12 С†РёС„СЂ"
+                  placeholder="12 цифр"
                   className={cn(
                     'w-full px-4 py-3 rounded-xl border outline-none transition-all focus:ring-2 focus:ring-emerald-500',
                     isDark ? 'bg-slate-600 border-slate-500' : 'bg-white border-slate-200'
@@ -1563,7 +1386,7 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
                       newMilestones[idx].description = e.target.value;
                       setMilestones(newMilestones);
                     }}
-                    placeholder="РћРїРёСЃР°РЅРёРµ СЌС‚Р°РїР°"
+                    placeholder="Описание этапа"
                     className={cn(
                       'flex-1 px-4 py-2 rounded-xl border outline-none text-sm',
                       isDark ? 'bg-slate-600 border-slate-500' : 'bg-white border-slate-200'
@@ -1577,7 +1400,7 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
                       newMilestones[idx].amount = Number(e.target.value);
                       setMilestones(newMilestones);
                     }}
-                    placeholder="РЎСѓРјРјР°"
+                    placeholder="Сумма"
                     className={cn(
                       'w-32 px-4 py-2 rounded-xl border outline-none text-sm',
                       isDark ? 'bg-slate-600 border-slate-500' : 'bg-white border-slate-200'
@@ -1664,7 +1487,7 @@ function CashRegisterModule({ t, isDark, user, formatCurrency, receipts, setRece
       setCustomerInfo({ name: '', iin: '' });
     } catch (err) {
       console.error('Error creating receipt:', err);
-      alert('РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё С‡РµРєР°');
+      alert('Ошибка при создании чека');
     } finally {
       setLoading(false);
     }
@@ -1768,7 +1591,7 @@ function CashRegisterModule({ t, isDark, user, formatCurrency, receipts, setRece
                       )}
                     />
                     <span className="w-24 text-right font-medium">
-                      в‚ё{(item.quantity * item.unitPrice).toLocaleString()}
+                      ₸{(item.quantity * item.unitPrice).toLocaleString()}
                     </span>
                     <button
                       onClick={() => setItems(items.filter((_, i) => i !== idx))}
@@ -1843,14 +1666,14 @@ function CashRegisterModule({ t, isDark, user, formatCurrency, receipts, setRece
                       <Receipt className="w-5 h-5 text-emerald-500" />
                     </div>
                     <div>
-                      <p className="font-medium">Р§РµРє #{receipt.receiptNumber}</p>
+                      <p className="font-medium">Чек #{receipt.receiptNumber}</p>
                       <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>
                         {receipt.date}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-emerald-500">в‚ё{receipt.total.toLocaleString()}</p>
+                    <p className="font-bold text-emerald-500">₸{receipt.total.toLocaleString()}</p>
                     <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>
                       {receipt.paymentMethod === 'cash' ? t.cash : receipt.paymentMethod === 'card' ? t.card : t.transfer}
                     </p>
@@ -1885,12 +1708,12 @@ function CashRegisterModule({ t, isDark, user, formatCurrency, receipts, setRece
           <div className="bg-white rounded-2xl p-8 w-full max-w-md">
             <div className="text-center border-b pb-4 mb-4">
               <h3 className="text-xl font-bold text-slate-900">{user?.company}</h3>
-              <p className="text-sm text-slate-500">РРРќ/Р‘РРќ: {user?.iin}</p>
-              <p className="text-sm text-slate-500">Рі. РђР»РјР°С‚С‹, СѓР». РђР±Р°СЏ 150</p>
+              <p className="text-sm text-slate-500">ИИН/БИН: {user?.iin}</p>
+              <p className="text-sm text-slate-500">г. Алматы, ул. Абая 150</p>
             </div>
 
             <div className="text-center mb-4">
-              <p className="text-2xl font-mono font-bold">Р§Р•Рљ #{generatedReceipt.number}</p>
+              <p className="text-2xl font-mono font-bold">ЧЕК #{generatedReceipt.number}</p>
               <p className="text-sm text-slate-500">{generatedReceipt.date} {generatedReceipt.time}</p>
             </div>
 
@@ -1900,19 +1723,19 @@ function CashRegisterModule({ t, isDark, user, formatCurrency, receipts, setRece
                   <span className="text-slate-700">
                     {item.description} x{item.quantity}
                   </span>
-                  <span className="font-medium">в‚ё{(item.quantity * item.unitPrice).toLocaleString()}</span>
+                  <span className="font-medium">₸{(item.quantity * item.unitPrice).toLocaleString()}</span>
                 </div>
               ))}
             </div>
 
             <div className="flex justify-between text-lg font-bold mb-6">
-              <span>РРўРћР“Рћ:</span>
-              <span>в‚ё{generatedReceipt.total.toLocaleString()}</span>
+              <span>ИТОГО:</span>
+              <span>₸{generatedReceipt.total.toLocaleString()}</span>
             </div>
 
             <div className="text-center text-sm text-slate-500 mb-6">
-              <p>РЎРїР°СЃРёР±Рѕ Р·Р° РїРѕРєСѓРїРєСѓ!</p>
-              <p className="mt-2">Р¤РёСЃРєР°Р»СЊРЅС‹Р№ РЅРѕРјРµСЂ: {Date.now()}</p>
+              <p>Спасибо за покупку!</p>
+              <p className="mt-2">Фискальный номер: {Date.now()}</p>
             </div>
 
             <div className="flex gap-3">
@@ -1920,11 +1743,11 @@ function CashRegisterModule({ t, isDark, user, formatCurrency, receipts, setRece
                 onClick={() => setShowReceipt(false)}
                 className="flex-1 py-3 border border-slate-200 rounded-xl font-medium hover:bg-slate-50 text-slate-700"
               >
-                Р—Р°РєСЂС‹С‚СЊ
+                Закрыть
               </button>
               <button className="flex-1 py-3 bg-emerald-500 text-white rounded-xl font-medium hover:bg-emerald-600 flex items-center justify-center gap-2">
                 <Printer className="w-4 h-4" />
-                РџРµС‡Р°С‚СЊ
+                Печать
               </button>
             </div>
           </div>
@@ -2457,7 +2280,7 @@ function BankStatementsModule({ t, isDark, formatCurrency, payrollTransactions, 
         )}>
           <div className="flex items-center gap-2 mb-2">
             <Bot className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-medium text-purple-500">AI Prompt РґР»СЏ Gemini:</span>
+            <span className="text-sm font-medium text-purple-500">AI Prompt для Gemini:</span>
           </div>
           <p className={cn('text-xs font-mono', isDark ? 'text-slate-400' : 'text-slate-600')}>
             "Parse this bank statement and extract all transactions. Categorize them into: income, office, payroll, taxes, transfer, other. For each transaction, provide date, counterparty, description, type, and amount."
@@ -2504,13 +2327,13 @@ function BankStatementsModule({ t, isDark, formatCurrency, payrollTransactions, 
           {/* Filters */}
           <div className="flex flex-wrap gap-2">
             {[
-              { id: 'all', label: 'Р’СЃРµ' },
-              { id: 'income', label: 'Р”РѕС…РѕРґС‹' },
-              { id: 'payroll', label: 'Р—Р°СЂРїР»Р°С‚С‹' },
-              { id: 'office', label: 'РћС„РёСЃ/РђСЂРµРЅРґР°' },
-              { id: 'taxes', label: 'РќР°Р»РѕРіРё' },
-              { id: 'transfer', label: 'РџРµСЂРµРІРѕРґС‹' },
-              { id: 'other', label: 'РџСЂРѕС‡РµРµ' }
+              { id: 'all', label: 'Все' },
+              { id: 'income', label: 'Доходы' },
+              { id: 'payroll', label: 'Зарплаты' },
+              { id: 'office', label: 'Офис/Аренда' },
+              { id: 'taxes', label: 'Налоги' },
+              { id: 'transfer', label: 'Переводы' },
+              { id: 'other', label: 'Прочее' }
             ].map((btn: any) => (
               <button
                 key={btn.id}
@@ -2536,10 +2359,10 @@ function BankStatementsModule({ t, isDark, formatCurrency, payrollTransactions, 
               <table className="w-full">
                 <thead>
                   <tr className={cn('border-b text-left', isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-100 bg-slate-50/50')}>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Р”Р°С‚Р°</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">РљРѕРЅС‚СЂР°РіРµРЅС‚ / РћРїРёСЃР°РЅРёРµ</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">РљР°С‚РµРіРѕСЂРёСЏ</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-right">РЎСѓРјРјР°</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Дата</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Контрагент / Описание</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Категория</th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-right">Сумма</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -2563,7 +2386,7 @@ function BankStatementsModule({ t, isDark, formatCurrency, payrollTransactions, 
                   {filteredTransactions.length === 0 && (
                     <tr>
                       <td colSpan={4} className="px-6 py-12 text-center">
-                        <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>РќРµС‚ С‚СЂР°РЅР·Р°РєС†РёР№ РІ СЌС‚РѕР№ РєР°С‚РµРіРѕСЂРёРё</p>
+                        <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>Нет транзакций в этой категории</p>
                       </td>
                     </tr>
                   )}
@@ -2603,7 +2426,7 @@ function DocumentGeneratorModule({ t, isDark }: any) {
   const generatePDF = async () => {
     // In a real scenario, we'd use jspdf here.
     // Since I can't run npm install, I'll alert the user and show a mock success.
-    alert(`Р“РµРЅРµСЂР°С†РёСЏ PDF (${docType}) РЅР° СЏР·С‹РєРµ ${docLang}...\nРџРѕР¶Р°Р»СѓР№СЃС‚Р°, СѓР±РµРґРёС‚РµСЃСЊ, С‡С‚Рѕ РІС‹ Р·Р°РїСѓСЃС‚РёР»Рё 'npm install jspdf jspdf-autotable'`);
+    alert(`Генерация PDF (${docType}) на языке ${docLang}...\nПожалуйста, убедитесь, что вы запустили 'npm install jspdf jspdf-autotable'`);
   };
 
   return (
@@ -2618,7 +2441,7 @@ function DocumentGeneratorModule({ t, isDark }: any) {
             <h3 className="font-bold text-lg mb-4">{t.generateNewDoc}</h3>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">{t.docTypeContract || 'РўРёРї РґРѕРєСѓРјРµРЅС‚Р°'}</label>
+              <label className="text-xs font-bold text-slate-500 uppercase">{t.docTypeContract || 'Тип документа'}</label>
               <div className="grid grid-cols-1 gap-2">
                 <button
                   onClick={() => setDocType('invoice')}
@@ -2651,9 +2474,9 @@ function DocumentGeneratorModule({ t, isDark }: any) {
                   isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200'
                 )}
               >
-                <option value="ru">Р СѓСЃСЃРєРёР№</option>
+                <option value="ru">Русский</option>
                 <option value="en">English</option>
-                <option value="kz">ТљР°Р·Р°Т›С€Р°</option>
+                <option value="kz">Қазақша</option>
               </select>
             </div>
           </div>
@@ -2677,7 +2500,7 @@ function DocumentGeneratorModule({ t, isDark }: any) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">РЁРёС„СЂ/РќРѕРјРµСЂ Рё Р”Р°С‚Р°</label>
+                <label className="text-sm font-medium">Шифр/Номер и Дата</label>
                 <div className="flex gap-2">
                   <input
                     value={data.number}
@@ -2739,7 +2562,7 @@ function DocumentGeneratorModule({ t, isDark }: any) {
               <div className="text-right">
                 <p className="text-xs text-slate-500 uppercase font-bold">{t.totalWithVat}</p>
                 <p className="text-2xl font-bold">
-                  в‚ё{data.items.reduce((sum, it) => sum + (it.qty * it.price), 0).toLocaleString()}
+                  ₸{data.items.reduce((sum, it) => sum + (it.qty * it.price), 0).toLocaleString()}
                 </p>
               </div>
               <button
@@ -2782,7 +2605,7 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
       setDocuments([newDoc, ...documents]);
     } catch (err) {
       console.error('Error uploading document:', err);
-      alert('РћС€РёР±РєР° РїСЂРё Р·Р°РіСЂСѓР·РєРµ РґРѕРєСѓРјРµРЅС‚Р°');
+      alert('Ошибка при загрузке документа');
     } finally {
       setUploading(false);
     }
@@ -2795,7 +2618,7 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
       setAnalysisResult(result);
     } catch (err) {
       console.error('Analysis error:', err);
-      alert('РћС€РёР±РєР° РїСЂРё Р°РЅР°Р»РёР·Рµ РґРѕРєСѓРјРµРЅС‚Р°');
+      alert('Ошибка при анализе документа');
     } finally {
       setAnalyzing(null);
     }
@@ -2854,13 +2677,13 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
                   <div className="space-y-2">
                     <h5 className="text-xs font-bold text-slate-500 uppercase">{t.keyTerms}</h5>
                     <ul className="text-sm space-y-1">
-                      {analysisResult.keyTerms.map((t: string, i: number) => <li key={i} className="flex gap-2">вЂў {t}</li>)}
+                      {analysisResult.keyTerms.map((t: string, i: number) => <li key={i} className="flex gap-2">• {t}</li>)}
                     </ul>
                   </div>
                   <div className="space-y-2">
                     <h5 className="text-xs font-bold text-slate-500 uppercase">{t.risks}</h5>
                     <ul className="text-sm space-y-1">
-                      {analysisResult.risks.map((t: string, i: number) => <li key={i} className="flex gap-2 text-red-400">вЂў {t}</li>)}
+                      {analysisResult.risks.map((t: string, i: number) => <li key={i} className="flex gap-2 text-red-400">• {t}</li>)}
                     </ul>
                   </div>
                 </div>
@@ -3005,13 +2828,13 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
 // Multi-Bank Module
 function MultiBankModule({ t, isDark, bankAccounts, setBankAccounts, formatCurrency, displayCurrency, convertToDisplayCurrency, setShowAddBank }: any) {
   const handleDeleteBank = async (id: string) => {
-    if (!confirm('РЈРґР°Р»РёС‚СЊ СЌС‚РѕС‚ Р±Р°РЅРєРѕРІСЃРєРёР№ СЃС‡С‘С‚?')) return;
+    if (!confirm('Удалить этот банковский счёт?')) return;
     try {
       await bankAccountsApi.delete(id);
       setBankAccounts((prev: any[]) => prev.filter((a) => a.id !== id));
     } catch (err) {
       console.error('Error deleting bank account:', err);
-      alert('РћС€РёР±РєР° РїСЂРё СѓРґР°Р»РµРЅРёРё СЃС‡С‘С‚Р°');
+      alert('Ошибка при удалении счёта');
     }
   };
   const totalInDisplay = (bankAccounts || []).reduce((sum: number, acc: any) => {
@@ -3028,12 +2851,12 @@ function MultiBankModule({ t, isDark, bankAccounts, setBankAccounts, formatCurre
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative">
-          <p className="text-white/80 mb-2">{t.totalBalanceAllBanks || 'РћР±С‰РёР№ Р±Р°Р»Р°РЅСЃ РІРѕ РІСЃРµС… Р±Р°РЅРєР°С…'}</p>
+          <p className="text-white/80 mb-2">{t.totalBalanceAllBanks || 'Общий баланс во всех банках'}</p>
           <h2 className="text-4xl font-bold mb-1">
             {formatCurrency(totalInDisplay, displayCurrency)}
           </h2>
           <p className="text-sm text-white/60">
-            {(bankAccounts || []).length} {t.bankAccountsCount || 'Р±Р°РЅРєРѕРІСЃРєРёС… СЃС‡РµС‚РѕРІ'} вЂў {t.displayedIn || 'РћС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РІ'} {displayCurrency}
+            {(bankAccounts || []).length} {t.bankAccountsCount || 'банковских счетов'} • {t.displayedIn || 'Отображается в'} {displayCurrency}
           </p>
         </div>
       </div>
@@ -3082,10 +2905,10 @@ function MultiBankModule({ t, isDark, bankAccounts, setBankAccounts, formatCurre
               </div>
               <div className="text-right">
                 <p className={cn('text-sm mb-1', isDark ? 'text-slate-400' : 'text-slate-500')}>
-                  Р’ {displayCurrency}
+                  В {displayCurrency}
                 </p>
                 <p className={cn('text-lg font-semibold', isDark ? 'text-slate-300' : 'text-slate-600')}>
-                  в‰€ {formatCurrency(convertToDisplayCurrency(account.balance, account.currency), displayCurrency)}
+                  ≈ {formatCurrency(convertToDisplayCurrency(account.balance, account.currency), displayCurrency)}
                 </p>
               </div>
             </div>
@@ -3096,7 +2919,7 @@ function MultiBankModule({ t, isDark, bankAccounts, setBankAccounts, formatCurre
                 isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'
               )}>
                 <ArrowLeftRight className="w-4 h-4" />
-                {t.viewTransactions || 'РџРѕСЃРјРѕС‚СЂРµС‚СЊ РѕРїРµСЂР°С†РёРё'}
+                {t.viewTransactions || 'Посмотреть операции'}
               </button>
               <button
                 onClick={() => handleDeleteBank(account.id)}
@@ -3106,7 +2929,7 @@ function MultiBankModule({ t, isDark, bankAccounts, setBankAccounts, formatCurre
                 )}
               >
                 <Trash2 className="w-4 h-4" />
-                РЈРґР°Р»РёС‚СЊ
+                Удалить
               </button>
             </div>
           </div>
@@ -3210,7 +3033,7 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
   if (!exchangeRates) {
     return (
       <div className="p-6 text-center text-slate-500">
-        Р—Р°РіСЂСѓР·РєР° РґР°РЅРЅС‹С… РѕР±РјРµРЅР° РІР°Р»СЋС‚...
+        Загрузка данных обмена валют...
       </div>
     );
   }
@@ -3268,9 +3091,9 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { currency: 'USD', rate: exchangeRates.usdKzt, flag: 'рџ‡єрџ‡ё', name: 'US Dollar' },
-            { currency: 'EUR', rate: exchangeRates.eurKzt, flag: 'рџ‡Єрџ‡є', name: 'Euro' },
-            { currency: 'RUB', rate: exchangeRates.rubKzt, flag: 'рџ‡·рџ‡є', name: 'Ruble' },
+            { currency: 'USD', rate: exchangeRates.usdKzt, flag: '🇺🇸', name: 'US Dollar' },
+            { currency: 'EUR', rate: exchangeRates.eurKzt, flag: '🇪🇺', name: 'Euro' },
+            { currency: 'RUB', rate: exchangeRates.rubKzt, flag: '🇷🇺', name: 'Ruble' },
           ].map((item) => (
             <div key={item.currency} className={cn(
               'p-4 rounded-xl',
@@ -3283,7 +3106,7 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
                   <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{item.name}</p>
                 </div>
               </div>
-              <p className="text-2xl font-bold">в‚ё{item.rate?.toFixed(2) || '0.00'}</p>
+              <p className="text-2xl font-bold">₸{item.rate?.toFixed(2) || '0.00'}</p>
             </div>
           ))}
         </div>
@@ -3355,7 +3178,7 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
                   city === 'Almaty' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
                 )}
               >
-                {language === 'kz' ? 'РђР»РјР°С‚С‹' : language === 'en' ? 'Almaty' : 'РђР»РјР°С‚С‹'}
+                {language === 'kz' ? 'Алматы' : language === 'en' ? 'Almaty' : 'Алматы'}
               </button>
               <button
                 onClick={() => detectLocationManual('Astana')}
@@ -3364,7 +3187,7 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
                   city === 'Astana' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'
                 )}
               >
-                {language === 'kz' ? 'РђСЃС‚Р°РЅР°' : language === 'en' ? 'Astana' : 'РђСЃС‚Р°РЅР°'}
+                {language === 'kz' ? 'Астана' : language === 'en' ? 'Astana' : 'Астана'}
               </button>
             </div>
 
@@ -3383,7 +3206,7 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
               ) : (
                 <MapPin className="w-4 h-4" />
               )}
-              {t.locationDetected || 'РћРїСЂРµРґРµР»РёС‚СЊ Р»РѕРєР°С†РёСЋ'}
+              {t.locationDetected || 'Определить локацию'}
             </button>
           </div>
         </div>
@@ -3500,10 +3323,10 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
         'p-6 rounded-2xl border',
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
       )}>
-        <h3 className="text-lg font-semibold mb-4">РљРѕРЅРІРµСЂС‚РµСЂ РІР°Р»СЋС‚</h3>
+        <h3 className="text-lg font-semibold mb-4">Конвертер валют</h3>
         <div className="flex items-center gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">РЎСѓРјРјР°</label>
+            <label className="block text-sm font-medium mb-2">Сумма</label>
             <input
               type="number"
               defaultValue={1000}
@@ -3514,39 +3337,39 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
             />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">РР·</label>
+            <label className="block text-sm font-medium mb-2">Из</label>
             <select className={cn(
               'w-full px-4 py-3 rounded-xl border outline-none',
               isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'
             )}>
               <option>USD ($)</option>
-              <option>EUR (в‚¬)</option>
-              <option>RUB (в‚Ѕ)</option>
-              <option>KZT (в‚ё)</option>
+              <option>EUR (€)</option>
+              <option>RUB (₽)</option>
+              <option>KZT (₸)</option>
             </select>
           </div>
           <div className="pt-7">
             <ArrowLeftRight className="w-6 h-6 text-slate-400" />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Р’</label>
+            <label className="block text-sm font-medium mb-2">В</label>
             <select className={cn(
               'w-full px-4 py-3 rounded-xl border outline-none',
               isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'
             )}>
-              <option>KZT (в‚ё)</option>
+              <option>KZT (₸)</option>
               <option>USD ($)</option>
-              <option>EUR (в‚¬)</option>
-              <option>RUB (в‚Ѕ)</option>
+              <option>EUR (€)</option>
+              <option>RUB (₽)</option>
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Р РµР·СѓР»СЊС‚Р°С‚</label>
+            <label className="block text-sm font-medium mb-2">Результат</label>
             <div className={cn(
               'px-4 py-3 rounded-xl font-bold text-emerald-500',
               isDark ? 'bg-slate-700' : 'bg-slate-100'
             )}>
-              в‚ё{exchangeRates?.usdKzt?.toLocaleString() || '450,250'}
+              ₸{exchangeRates?.usdKzt?.toLocaleString() || '450,250'}
             </div>
           </div>
         </div>
@@ -3559,28 +3382,28 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
 // BUSINESSES MODULE
 // ============================================================
 const BUSINESS_TYPES = [
-  { value: 'retail', label: 'РњР°РіР°Р·РёРЅ / Р РѕР·РЅРёС†Р°', icon: 'рџ›’' },
-  { value: 'cafe', label: 'РљР°С„Рµ / Р РµСЃС‚РѕСЂР°РЅ', icon: 'в•' },
-  { value: 'service', label: 'РЈСЃР»СѓРіРё', icon: 'рџ”§' },
-  { value: 'online', label: 'РћРЅР»Р°Р№РЅ-Р±РёР·РЅРµСЃ', icon: 'рџ’»' },
-  { value: 'production', label: 'РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ', icon: 'рџЏ­' },
-  { value: 'logistics', label: 'Р›РѕРіРёСЃС‚РёРєР° / Р”РѕСЃС‚Р°РІРєР°', icon: 'рџљљ' },
-  { value: 'education', label: 'РћР±СЂР°Р·РѕРІР°РЅРёРµ', icon: 'рџ“љ' },
-  { value: 'beauty', label: 'РљСЂР°СЃРѕС‚Р° / РЎР°Р»РѕРЅ', icon: 'рџ’…' },
-  { value: 'other', label: 'Р”СЂСѓРіРѕРµ', icon: 'рџЏў' },
+  { value: 'retail', label: 'Магазин / Розница', icon: '🛒' },
+  { value: 'cafe', label: 'Кафе / Ресторан', icon: '☕' },
+  { value: 'service', label: 'Услуги', icon: '🔧' },
+  { value: 'online', label: 'Онлайн-бизнес', icon: '💻' },
+  { value: 'production', label: 'Производство', icon: '🏭' },
+  { value: 'logistics', label: 'Логистика / Доставка', icon: '🚚' },
+  { value: 'education', label: 'Образование', icon: '📚' },
+  { value: 'beauty', label: 'Красота / Салон', icon: '💅' },
+  { value: 'other', label: 'Другое', icon: '🏢' },
 ];
 
 const TX_CATEGORIES = [
-  { value: 'sales', label: 'РџСЂРѕРґР°Р¶Рё', type: 'income' },
-  { value: 'services', label: 'РЈСЃР»СѓРіРё', type: 'income' },
-  { value: 'other_income', label: 'Р”СЂСѓРіРѕР№ РґРѕС…РѕРґ', type: 'income' },
-  { value: 'rent', label: 'РђСЂРµРЅРґР°', type: 'expense' },
-  { value: 'salary', label: 'Р—Р°СЂРїР»Р°С‚Р°', type: 'expense' },
-  { value: 'supplies', label: 'Р—Р°РєСѓРїРєР°/РЎС‹СЂСЊС‘', type: 'expense' },
-  { value: 'marketing', label: 'РњР°СЂРєРµС‚РёРЅРі', type: 'expense' },
-  { value: 'utilities', label: 'РљРѕРјРјСѓРЅР°Р»СЊРЅС‹Рµ', type: 'expense' },
-  { value: 'taxes', label: 'РќР°Р»РѕРіРё', type: 'expense' },
-  { value: 'other_expense', label: 'Р”СЂСѓРіРѕР№ СЂР°СЃС…РѕРґ', type: 'expense' },
+  { value: 'sales', label: 'Продажи', type: 'income' },
+  { value: 'services', label: 'Услуги', type: 'income' },
+  { value: 'other_income', label: 'Другой доход', type: 'income' },
+  { value: 'rent', label: 'Аренда', type: 'expense' },
+  { value: 'salary', label: 'Зарплата', type: 'expense' },
+  { value: 'supplies', label: 'Закупка/Сырьё', type: 'expense' },
+  { value: 'marketing', label: 'Маркетинг', type: 'expense' },
+  { value: 'utilities', label: 'Коммунальные', type: 'expense' },
+  { value: 'taxes', label: 'Налоги', type: 'expense' },
+  { value: 'other_expense', label: 'Другой расход', type: 'expense' },
 ];
 
 function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurrency }: any) {
@@ -3589,13 +3412,13 @@ function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurr
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('РЈРґР°Р»РёС‚СЊ СЌС‚РѕС‚ Р±РёР·РЅРµСЃ Рё РІСЃРµ РµРіРѕ РґР°РЅРЅС‹Рµ?')) return;
+    if (!confirm('Удалить этот бизнес и все его данные?')) return;
     try {
       await businessesApi.delete(id);
       setBusinesses((prev: any[]) => prev.filter((b) => b.id !== id));
       if (activeBusiness?.id === id) setActiveBusiness(null);
     } catch {
-      alert('РћС€РёР±РєР° РїСЂРё СѓРґР°Р»РµРЅРёРё Р±РёР·РЅРµСЃР°');
+      alert('Ошибка при удалении бизнеса');
     }
   };
 
@@ -3615,9 +3438,9 @@ function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurr
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">РњРѕРё Р‘РёР·РЅРµСЃС‹</h2>
+          <h2 className="text-2xl font-bold">Мои Бизнесы</h2>
           <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>
-            РЈРїСЂР°РІР»СЏР№С‚Рµ РєР°Р¶РґС‹Рј Р±РёР·РЅРµСЃРѕРј РѕС‚РґРµР»СЊРЅРѕ вЂ” С„РёРЅР°РЅСЃС‹, Р°РЅР°Р»РёС‚РёРєР° Рё РР-СЃРѕРІРµС‚РЅРёРє
+            Управляйте каждым бизнесом отдельно — финансы, аналитика и ИИ-советник
           </p>
         </div>
         <button
@@ -3625,7 +3448,7 @@ function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurr
           className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all"
         >
           <Plus className="w-5 h-5" />
-          Р”РѕР±Р°РІРёС‚СЊ Р±РёР·РЅРµСЃ
+          Добавить бизнес
         </button>
       </div>
 
@@ -3676,11 +3499,11 @@ function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurr
 
               <div className="flex items-center justify-between pt-4 border-t border-slate-200/50 dark:border-slate-700/50">
                 <span className={cn('text-xs', isDark ? 'text-slate-500' : 'text-slate-400')}>
-                  РћС‚РєСЂС‹С‚СЊ в†’
+                  Открыть →
                 </span>
                 <div className="flex items-center gap-1">
                   <Bot className="w-4 h-4 text-purple-500" />
-                  <span className="text-xs text-purple-500">РР-СЃРѕРІРµС‚РЅРёРє</span>
+                  <span className="text-xs text-purple-500">ИИ-советник</span>
                 </div>
               </div>
             </div>
@@ -3698,9 +3521,9 @@ function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurr
           <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-3', isDark ? 'bg-slate-700' : 'bg-slate-100')}>
             <Plus className="w-6 h-6 text-emerald-500" />
           </div>
-          <p className="font-semibold">Р”РѕР±Р°РІРёС‚СЊ Р±РёР·РЅРµСЃ</p>
+          <p className="font-semibold">Добавить бизнес</p>
           <p className={cn('text-sm mt-1 text-center', isDark ? 'text-slate-500' : 'text-slate-400')}>
-            РњР°РіР°Р·РёРЅ, РєР°С„Рµ, СЃРµСЂРІРёСЃ Рё РґСЂСѓРіРѕРµ
+            Магазин, кафе, сервис и другое
           </p>
         </div>
       </div>
@@ -3726,7 +3549,7 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
   const selectedType = BUSINESS_TYPES.find(t => t.value === form.type) || BUSINESS_TYPES[0];
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) return alert('Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ');
+    if (!form.name.trim()) return alert('Введите название');
     setLoading(true);
     try {
       const newBiz = await businessesApi.create({
@@ -3736,7 +3559,7 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
       onAdd(newBiz);
       onClose();
     } catch {
-      alert('РћС€РёР±РєР° РїСЂРё СЃРѕР·РґР°РЅРёРё Р±РёР·РЅРµСЃР°');
+      alert('Ошибка при создании бизнеса');
     } finally {
       setLoading(false);
     }
@@ -3746,26 +3569,26 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className={cn('w-full max-w-lg rounded-3xl p-6 shadow-2xl', isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white')}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold">РќРѕРІС‹Р№ Р±РёР·РЅРµСЃ</h3>
+          <h3 className="text-xl font-bold">Новый бизнес</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-500/10 rounded-full"><X className="w-5 h-5" /></button>
         </div>
 
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">РќР°Р·РІР°РЅРёРµ Р±РёР·РЅРµСЃР°</label>
+            <label className="text-sm font-medium mb-1.5 block">Название бизнеса</label>
             <input
               type="text"
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="Kaspi РњР°РіР°Р·РёРЅ, РљР°С„Рµ В«РЈСЋС‚В»..."
+              placeholder="Kaspi Магазин, Кафе «Уют»..."
               className={cn('w-full p-3 rounded-xl border outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200')}
             />
           </div>
 
           {/* Type */}
           <div>
-            <label className="text-sm font-medium mb-2 block">РўРёРї Р±РёР·РЅРµСЃР°</label>
+            <label className="text-sm font-medium mb-2 block">Тип бизнеса</label>
             <div className="grid grid-cols-3 gap-2">
               {BUSINESS_TYPES.map(bt => (
                 <button
@@ -3787,19 +3610,19 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
 
           {/* Description */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">РћРїРёСЃР°РЅРёРµ (РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ)</label>
+            <label className="text-sm font-medium mb-1.5 block">Описание (необязательно)</label>
             <textarea
               rows={2}
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
-              placeholder="Р§РµРј Р·Р°РЅРёРјР°РµС‚СЃСЏ Р±РёР·РЅРµСЃ, С†РµР»Рё, РѕСЃРѕР±РµРЅРЅРѕСЃС‚Рё..."
+              placeholder="Чем занимается бизнес, цели, особенности..."
               className={cn('w-full p-3 rounded-xl border outline-none resize-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200')}
             />
           </div>
 
           {/* Color */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Р¦РІРµС‚</label>
+            <label className="text-sm font-medium mb-2 block">Цвет</label>
             <div className="flex gap-2">
               {colors.map(c => (
                 <button
@@ -3815,14 +3638,14 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
 
         <div className="flex gap-3 mt-6">
           <button onClick={onClose} className={cn('flex-1 py-3 rounded-xl font-medium', isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200')}>
-            РћС‚РјРµРЅР°
+            Отмена
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading || !form.name.trim()}
             className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold disabled:opacity-50 hover:shadow-lg transition-all"
           >
-            {loading ? 'РЎРѕР·РґР°РЅРёРµ...' : 'РЎРѕР·РґР°С‚СЊ Р±РёР·РЅРµСЃ'}
+            {loading ? 'Создание...' : 'Создать бизнес'}
           </button>
         </div>
       </div>
@@ -3884,14 +3707,14 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
       const { response } = await businessAiApi.sendMessage(business.id, msg);
       setChatHistory(prev => [...prev, { role: 'assistant', message: response, created_at: new Date().toISOString() }]);
     } catch {
-      setChatHistory(prev => [...prev, { role: 'assistant', message: 'РћС€РёР±РєР° СЃРІСЏР·Рё. РџРѕРїСЂРѕР±СѓР№С‚Рµ РµС‰С‘ СЂР°Р·.', created_at: new Date().toISOString() }]);
+      setChatHistory(prev => [...prev, { role: 'assistant', message: 'Ошибка связи. Попробуйте ещё раз.', created_at: new Date().toISOString() }]);
     } finally {
       setChatSending(false);
     }
   };
 
   const handleDeleteTx = async (txId: string) => {
-    if (!confirm('РЈРґР°Р»РёС‚СЊ С‚СЂР°РЅР·Р°РєС†РёСЋ?')) return;
+    if (!confirm('Удалить транзакцию?')) return;
     await businessTxApi.delete(business.id, txId);
     setTransactions(prev => prev.filter(t => t.id !== txId));
   };
@@ -3904,7 +3727,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           onClick={onBack}
           className={cn('flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-colors', isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-50 border border-slate-200')}
         >
-          в†ђ РќР°Р·Р°Рґ
+          ← Назад
         </button>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow" style={{ backgroundColor: business.color || '#10B981' }}>
@@ -3920,9 +3743,9 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Р”РѕС…РѕРґ', value: formatCurrency(totalIncome), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-          { label: 'Р Р°СЃС…РѕРґ', value: formatCurrency(totalExpense), color: 'text-red-500', bg: 'bg-red-500/10' },
-          { label: 'РџСЂРёР±С‹Р»СЊ', value: formatCurrency(profit), color: profit >= 0 ? 'text-emerald-500' : 'text-red-500', bg: profit >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10' },
+          { label: 'Доход', value: formatCurrency(totalIncome), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { label: 'Расход', value: formatCurrency(totalExpense), color: 'text-red-500', bg: 'bg-red-500/10' },
+          { label: 'Прибыль', value: formatCurrency(profit), color: profit >= 0 ? 'text-emerald-500' : 'text-red-500', bg: profit >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10' },
         ].map(s => (
           <div key={s.label} className={cn('p-4 rounded-2xl border text-center', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <p className={cn('text-xs font-medium mb-1', isDark ? 'text-slate-400' : 'text-slate-500')}>{s.label}</p>
@@ -3937,7 +3760,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           {/* Chart */}
           <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">Р“СЂР°С„РёРє С‚СЂР°РЅР·Р°РєС†РёР№</h3>
+              <h3 className="font-bold">График транзакций</h3>
               <div className={cn('flex rounded-xl p-1', isDark ? 'bg-slate-900' : 'bg-slate-100')}>
                 {(['week', 'month', 'year'] as const).map(p => (
                   <button
@@ -3947,7 +3770,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                       period === p ? 'bg-emerald-500 text-white shadow' : isDark ? 'text-slate-400' : 'text-slate-600'
                     )}
                   >
-                    {p === 'week' ? 'РќРµРґРµР»СЏ' : p === 'month' ? 'РњРµСЃСЏС†' : 'Р“РѕРґ'}
+                    {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Год'}
                   </button>
                 ))}
               </div>
@@ -3958,20 +3781,20 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                 <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#f1f5f9'} />
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} tickFormatter={d => d.slice(5)} />
-                  <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} tickFormatter={v => `в‚ё${(v / 1000).toFixed(0)}k`} />
+                  <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} tickFormatter={v => `₸${(v / 1000).toFixed(0)}k`} />
                   <Tooltip
                     contentStyle={{ background: isDark ? '#1e293b' : '#fff', border: 'none', borderRadius: 12, fontSize: 12 }}
-                    formatter={(v: any) => [`в‚ё${Number(v).toLocaleString()}`, undefined]}
+                    formatter={(v: any) => [`₸${Number(v).toLocaleString()}`, undefined]}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} dot={false} name="Р”РѕС…РѕРґ" />
-                  <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} dot={false} name="Р Р°СЃС…РѕРґ" />
+                  <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} dot={false} name="Доход" />
+                  <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} dot={false} name="Расход" />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className={cn('flex flex-col items-center justify-center h-40 rounded-xl', isDark ? 'bg-slate-900/50' : 'bg-slate-50')}>
                 <TrendingUp className="w-8 h-8 text-slate-400 mb-2" />
-                <p className="text-sm text-slate-400">Р”РѕР±Р°РІСЊС‚Рµ С‚СЂР°РЅР·Р°РєС†РёРё, С‡С‚РѕР±С‹ СѓРІРёРґРµС‚СЊ РіСЂР°С„РёРє</p>
+                <p className="text-sm text-slate-400">Добавьте транзакции, чтобы увидеть график</p>
               </div>
             )}
           </div>
@@ -3979,22 +3802,22 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           {/* Transactions */}
           <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">РўСЂР°РЅР·Р°РєС†РёРё</h3>
+              <h3 className="font-bold">Транзакции</h3>
               <button
                 onClick={() => setShowAddTx(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg text-sm font-medium hover:shadow transition-all"
               >
-                <Plus className="w-4 h-4" /> Р”РѕР±Р°РІРёС‚СЊ
+                <Plus className="w-4 h-4" /> Добавить
               </button>
             </div>
 
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {loadingTx ? (
-                <div className="text-center py-6 text-slate-400">Р—Р°РіСЂСѓР·РєР°...</div>
+                <div className="text-center py-6 text-slate-400">Загрузка...</div>
               ) : transactions.length === 0 ? (
                 <div className="text-center py-8">
                   <Wallet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400">РќРµС‚ С‚СЂР°РЅР·Р°РєС†РёР№</p>
+                  <p className="text-sm text-slate-400">Нет транзакций</p>
                 </div>
               ) : transactions.map((tx: any) => {
                 const cat = TX_CATEGORIES.find(c => c.value === tx.category);
@@ -4002,16 +3825,16 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                   <div key={tx.id} className={cn('flex items-center justify-between p-3 rounded-xl group', isDark ? 'bg-slate-700/50 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100')}>
                     <div className="flex items-center gap-3">
                       <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center text-sm', tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500')}>
-                        {tx.type === 'income' ? 'в†‘' : 'в†“'}
+                        {tx.type === 'income' ? '↑' : '↓'}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{tx.description || cat?.label || 'РўСЂР°РЅР·Р°РєС†РёСЏ'}</p>
-                        <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>{tx.date} вЂў {cat?.label || tx.category}</p>
+                        <p className="text-sm font-medium">{tx.description || cat?.label || 'Транзакция'}</p>
+                        <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>{tx.date} • {cat?.label || tx.category}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={cn('font-semibold text-sm', tx.type === 'income' ? 'text-emerald-500' : 'text-red-500')}>
-                        {tx.type === 'income' ? '+' : '-'}в‚ё{Number(tx.amount).toLocaleString()}
+                        {tx.type === 'income' ? '+' : '-'}₸{Number(tx.amount).toLocaleString()}
                       </span>
                       <button
                         onClick={() => handleDeleteTx(tx.id)}
@@ -4034,15 +3857,15 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
               <Bot className="w-5 h-5 text-purple-500" />
             </div>
             <div>
-              <h3 className="font-bold">РР-СЃРѕРІРµС‚РЅРёРє</h3>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>РџРµСЂСЃРѕРЅР°Р»СЊРЅС‹Р№ СЃРѕРІРµС‚РЅРёРє РґР»СЏ {business.name}</p>
+              <h3 className="font-bold">ИИ-советник</h3>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Персональный советник для {business.name}</p>
             </div>
             {chatHistory.length > 0 && (
               <button
-                onClick={async () => { if (confirm('РћС‡РёСЃС‚РёС‚СЊ РёСЃС‚РѕСЂРёСЋ?')) { await businessAiApi.clearHistory(business.id); setChatHistory([]); } }}
+                onClick={async () => { if (confirm('Очистить историю?')) { await businessAiApi.clearHistory(business.id); setChatHistory([]); } }}
                 className={cn('ml-auto text-xs px-2 py-1 rounded-lg', isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-100')}
               >
-                РћС‡РёСЃС‚РёС‚СЊ
+                Очистить
               </button>
             )}
           </div>
@@ -4050,17 +3873,17 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {loadingChat ? (
-              <div className="text-center py-6 text-slate-400">Р—Р°РіСЂСѓР·РєР°...</div>
+              <div className="text-center py-6 text-slate-400">Загрузка...</div>
             ) : chatHistory.length === 0 ? (
               <div className={cn('p-4 rounded-2xl text-sm', isDark ? 'bg-slate-700' : 'bg-purple-50')}>
                 <div className="flex items-center gap-2 mb-2">
                   <Bot className="w-4 h-4 text-purple-500" />
-                  <span className="font-medium text-purple-600">РР-СЃРѕРІРµС‚РЅРёРє</span>
+                  <span className="font-medium text-purple-600">ИИ-советник</span>
                 </div>
                 <p className={isDark ? 'text-slate-300' : 'text-slate-700'}>
-                  рџ‘‹ РџСЂРёРІРµС‚! РЇ РІР°С€ РїРµСЂСЃРѕРЅР°Р»СЊРЅС‹Р№ Р±РёР·РЅРµСЃ-СЃРѕРІРµС‚РЅРёРє РґР»СЏ <strong>{business.name}</strong>.
-                  РЇ РІРёР¶Сѓ РІР°С€Рё С„РёРЅР°РЅСЃРѕРІС‹Рµ РґР°РЅРЅС‹Рµ Рё РёСЃС‚РѕСЂРёСЋ С‚СЂР°РЅР·Р°РєС†РёР№, РїРѕСЌС‚РѕРјСѓ РјРѕРіСѓ РґР°РІР°С‚СЊ С‚РѕС‡РЅС‹Рµ СЃРѕРІРµС‚С‹.
-                  РЎРїСЂРѕСЃРёС‚Рµ РјРµРЅСЏ Рѕ СЂРѕСЃС‚Рµ, РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёРё, СЃРЅРёР¶РµРЅРёРё СЂР°СЃС…РѕРґРѕРІ РёР»Рё СЃС‚СЂР°С‚РµРіРёРё!
+                  👋 Привет! Я ваш персональный бизнес-советник для <strong>{business.name}</strong>.
+                  Я вижу ваши финансовые данные и историю транзакций, поэтому могу давать точные советы.
+                  Спросите меня о росте, масштабировании, снижении расходов или стратегии!
                 </p>
               </div>
             ) : chatHistory.map((msg: any, i: number) => (
@@ -4074,7 +3897,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                   {msg.role === 'assistant' && (
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <Bot className="w-3.5 h-3.5 text-purple-500" />
-                      <span className="text-xs font-medium text-purple-500">РР-СЃРѕРІРµС‚РЅРёРє</span>
+                      <span className="text-xs font-medium text-purple-500">ИИ-советник</span>
                     </div>
                   )}
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
@@ -4100,7 +3923,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              placeholder="РљР°Рє СѓРІРµР»РёС‡РёС‚СЊ РїСЂРёР±С‹Р»СЊ? (Enter С‡С‚РѕР±С‹ РѕС‚РїСЂР°РІРёС‚СЊ)"
+              placeholder="Как увеличить прибыль? (Enter чтобы отправить)"
               className="flex-1 bg-transparent outline-none text-sm px-2"
               disabled={chatSending}
             />
@@ -4136,14 +3959,14 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
   const filteredCats = TX_CATEGORIES.filter(c => c.type === form.type);
 
   const handleSubmit = async () => {
-    if (!form.amount || isNaN(Number(form.amount))) return alert('Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅСѓСЋ СЃСѓРјРјСѓ');
+    if (!form.amount || isNaN(Number(form.amount))) return alert('Введите корректную сумму');
     setLoading(true);
     try {
       const tx = await businessTxApi.create(businessId, form);
       onAdd(tx);
       onClose();
     } catch {
-      alert('РћС€РёР±РєР° РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё С‚СЂР°РЅР·Р°РєС†РёРё');
+      alert('Ошибка при добавлении транзакции');
     } finally {
       setLoading(false);
     }
@@ -4153,7 +3976,7 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className={cn('w-full max-w-md rounded-3xl p-6 shadow-2xl', isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white')}>
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold">Р”РѕР±Р°РІРёС‚СЊ С‚СЂР°РЅР·Р°РєС†РёСЋ</h3>
+          <h3 className="text-lg font-bold">Добавить транзакцию</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-500/10 rounded-full"><X className="w-5 h-5" /></button>
         </div>
 
@@ -4171,14 +3994,14 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
                     : isDark ? 'bg-slate-700' : 'bg-slate-100'
                 )}
               >
-                {type === 'income' ? 'в†‘ Р”РѕС…РѕРґ' : 'в†“ Р Р°СЃС…РѕРґ'}
+                {type === 'income' ? '↑ Доход' : '↓ Расход'}
               </button>
             ))}
           </div>
 
           {/* Amount */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">РЎСѓРјРјР° (в‚ё)</label>
+            <label className="text-sm font-medium mb-1.5 block">Сумма (₸)</label>
             <input
               type="number"
               value={form.amount}
@@ -4190,7 +4013,7 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
 
           {/* Category */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">РљР°С‚РµРіРѕСЂРёСЏ</label>
+            <label className="text-sm font-medium mb-1.5 block">Категория</label>
             <select
               value={form.category}
               onChange={e => setForm({ ...form, category: e.target.value })}
@@ -4203,17 +4026,17 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
           {/* Description + Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">РћРїРёСЃР°РЅРёРµ</label>
+              <label className="text-sm font-medium mb-1.5 block">Описание</label>
               <input
                 type="text"
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
-                placeholder="РќРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ"
+                placeholder="Необязательно"
                 className={cn('w-full p-3 rounded-xl border outline-none', isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200')}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Р”Р°С‚Р°</label>
+              <label className="text-sm font-medium mb-1.5 block">Дата</label>
               <input
                 type="date"
                 value={form.date}
@@ -4225,7 +4048,7 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
         </div>
 
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className={cn('flex-1 py-3 rounded-xl font-medium', isDark ? 'bg-slate-700' : 'bg-slate-100')}>РћС‚РјРµРЅР°</button>
+          <button onClick={onClose} className={cn('flex-1 py-3 rounded-xl font-medium', isDark ? 'bg-slate-700' : 'bg-slate-100')}>Отмена</button>
           <button
             onClick={handleSubmit}
             disabled={loading || !form.amount}
@@ -4234,7 +4057,7 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
               form.type === 'income' ? 'bg-gradient-to-r from-emerald-500 to-teal-600' : 'bg-gradient-to-r from-red-500 to-rose-600'
             )}
           >
-            {loading ? 'РЎРѕС…СЂР°РЅРµРЅРёРµ...' : form.type === 'income' ? '+ Р”РѕР±Р°РІРёС‚СЊ РґРѕС…РѕРґ' : '- Р”РѕР±Р°РІРёС‚СЊ СЂР°СЃС…РѕРґ'}
+            {loading ? 'Сохранение...' : form.type === 'income' ? '+ Добавить доход' : '- Добавить расход'}
           </button>
         </div>
       </div>
