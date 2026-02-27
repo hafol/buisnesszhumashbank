@@ -39,6 +39,83 @@ export const CubeLoader = ({ className = '', scale = 1 }: { className?: string, 
   </div>
 );
 
+export const GenerationProgressModal = ({ isOpen, progress, status, t, isDark }: any) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" />
+      <div className={cn(
+        'relative w-full max-w-md p-8 rounded-3xl border shadow-2xl transition-all duration-500 scale-100',
+        isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
+      )}>
+        <div className="flex flex-col items-center text-center space-y-6">
+          <div className="relative w-24 h-24 flex items-center justify-center">
+            <svg className="w-full h-full -rotate-90">
+              <circle
+                cx="48" cy="48" r="40"
+                fill="transparent"
+                stroke={isDark ? '#1e293b' : '#f1f5f9'}
+                strokeWidth="8"
+              />
+              <circle
+                cx="48" cy="48" r="40"
+                fill="transparent"
+                stroke="url(#progressGradient)"
+                strokeWidth="8"
+                strokeDasharray={`${2 * Math.PI * 40}`}
+                strokeDashoffset={`${(2 * Math.PI * 40) * (1 - progress / 100)}`}
+                strokeLinecap="round"
+                className="transition-all duration-500 ease-out"
+              />
+              <defs>
+                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="absolute text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+              {progress}%
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-xl font-bold">{t.generatingDoc}</h3>
+            <p className="text-sm text-slate-500 font-medium animate-pulse">{status}</p>
+          </div>
+
+          <div className="w-full bg-slate-900/50 rounded-full h-2 overflow-hidden border border-slate-700/50">
+            <div
+              className="h-full bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
+            <Sparkles className="w-4 h-4 text-blue-500" />
+            Gemini AI Engine
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const initPdfMake = () => {
+  // Configure pdfMake to use our custom Times New Roman (Tinos) fonts
+  // Using explicit casting or direct assignment to bypass some lint types
+  (pdfMake as any).vfs = pdfFonts;
+  pdfMake.fonts = {
+    TimesNewRoman: {
+      normal: 'TimesNewRoman-Regular.ttf',
+      bold: 'TimesNewRoman-Bold.ttf',
+      italics: 'TimesNewRoman-Regular.ttf',
+      bolditalics: 'TimesNewRoman-Bold.ttf'
+    }
+  };
+};
+
 // Auth Gate - decides which page to show
 export function App() {
   const { loading } = useAuth();
@@ -49,17 +126,8 @@ export function App() {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Configure pdfMake to use our custom Times New Roman (Tinos) fonts
     console.log('Initializing pdfMake VFS...', Object.keys(pdfFonts));
-    pdfMake.vfs = pdfFonts;
-    pdfMake.fonts = {
-      TimesNewRoman: {
-        normal: 'TimesNewRoman-Regular.ttf',
-        bold: 'TimesNewRoman-Bold.ttf',
-        italics: 'TimesNewRoman-Regular.ttf',
-        bolditalics: 'TimesNewRoman-Bold.ttf'
-      }
-    };
+    initPdfMake();
   }, []);
 
   const handleLanguageChange = (l: Language) => {
@@ -2572,27 +2640,85 @@ function AIDocGenerator({ t, isDark }: any) {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Progress state
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [genProgress, setGenProgress] = useState(0);
+  const [genStatus, setGenStatus] = useState('');
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
+
     setLoading(true);
+    setIsGenerating(true);
+    setGenProgress(5);
+    setGenStatus(t.processingAI);
+
+    // Simulated progress while waiting for Gemini
+    const progressInterval = setInterval(() => {
+      setGenProgress(prev => {
+        if (prev < 70) return prev + 2;
+        if (prev < 85) return prev + 1;
+        return prev;
+      });
+    }, 400);
+
     try {
       const docDefinition = await businessAiApi.generateDoc(prompt);
+      clearInterval(progressInterval);
+
+      setGenProgress(90);
+      setGenStatus(t.finalizingPDF);
+
+      // Robust PDF Fix: Re-initialize VFS and Fonts right before use
+      (initPdfMake as any)();
 
       // Ensure default style is set if AI forgot
       if (!docDefinition.defaultStyle) {
         docDefinition.defaultStyle = { font: 'TimesNewRoman', fontSize: 11 };
       }
 
-      pdfMake.createPdf(docDefinition).download(`AI_Document_${new Date().getTime()}.pdf`);
+      // Generate the PDF as a blob to detect actual completion
+      const pdfDocGenerator = (pdfMake as any).createPdf(docDefinition);
+
+      pdfDocGenerator.getBlob((blob: any) => {
+        setGenProgress(100);
+        setGenStatus(t.downloadReady);
+
+        // Trigger download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `AI_Document_${new Date().getTime()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        // Close modal after delay
+        setTimeout(() => {
+          setIsGenerating(false);
+          setLoading(false);
+          setGenProgress(0);
+        }, 1500);
+      });
+
     } catch (err: any) {
-      alert(t.error + ': ' + err.message);
-    } finally {
+      clearInterval(progressInterval);
+      setIsGenerating(false);
       setLoading(false);
+      alert(t.error + ': ' + err.message);
     }
   };
 
   return (
     <div className="space-y-4">
+      <GenerationProgressModal
+        isOpen={isGenerating}
+        progress={genProgress}
+        status={genStatus}
+        t={t}
+        isDark={isDark}
+      />
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium">{t.describeDoc}</label>
         <p className="text-xs text-slate-500">{t.aiDocGeneratorSub}</p>
@@ -2659,6 +2785,9 @@ function DocumentGeneratorModule({ t, isDark }: any) {
     if (docLang === 'kz') titleStr = isAct ? 'Орындалған жұмыстар актісі' : 'Төлем шот-фактурасы';
     else if (docLang === 'en') titleStr = isAct ? 'Act of Work Performed' : 'Invoice for Payment';
     else titleStr = isAct ? 'Акт выполненных работ' : 'Счет на оплату';
+
+    // Robust PDF Fix: Re-initialize VFS and Fonts right before use
+    (initPdfMake as any)();
 
     const docDefinition: any = {
       defaultStyle: {

@@ -219,6 +219,10 @@ export const translations = {
     describeDoc: 'Описание документа (условия, суммы, стадии...)',
     docPromptPlaceholder: 'Например: Договор оказания услуг SMM, 3 этапа оплаты, общая сумма 1 000 000 тенге...',
     generatingDoc: 'ИИ создает документ...',
+    processingAI: 'Анализ запроса и генерация структуры...',
+    finalizingPDF: 'Финальная сборка PDF...',
+    downloadReady: 'Документ готов к скачиванию!',
+    currentProgress: 'Текущий прогресс',
 
 
     // Banks
@@ -538,6 +542,10 @@ export const translations = {
     describeDoc: 'Document Description (conditions, amounts, stages...)',
     docPromptPlaceholder: 'Example: SMM service contract, 3 payment stages, total amount 1,000,000 KZT...',
     generatingDoc: 'AI is generating document...',
+    processingAI: 'Analyzing request and generating structure...',
+    finalizingPDF: 'Finalizing PDF build...',
+    downloadReady: 'Document is ready for download!',
+    currentProgress: 'Current progress',
 
     multiBankDashboard: 'Multi-Bank Dashboard',
     multiBankSub: 'All your accounts in one place',
@@ -877,6 +885,10 @@ export const translations = {
     describeDoc: 'Құжат сипаттамасы (шарттар, сомалар, кезеңдер...)',
     docPromptPlaceholder: 'Мысалы: SMM қызметтерін көрсету шарты, 3 төлем кезеңі, жалпы сомасы 1 000 000 теңге...',
     generatingDoc: 'ЖИ құжатты жасауда...',
+    processingAI: 'Сұранысты талдау және құрылымды құру...',
+    finalizingPDF: 'PDF-ті соңғы жинақтау...',
+    downloadReady: 'Құжат жүктеуге дайын!',
+    currentProgress: 'Ағымдағы прогресс',
 
     multiBankDashboard: 'Мультибанктік бақылау тақтасы',
     multiBankSub: 'Барлық шоттарыңыз бір жерде',
