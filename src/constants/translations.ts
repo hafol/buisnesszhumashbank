@@ -181,7 +181,7 @@ export const translations = {
     totalIncomingTrans: 'Всего входящих:',
     totalOutgoingTrans: 'Всего исходящих:',
     parsingFileError: 'Ошибка при разборе файла',
-    netFlow: 'Чистый поток',
+    netFlow: 'Чистый поток', // kept original
 
     // Documents
     documentHub: 'Хаб документов',
@@ -214,6 +214,12 @@ export const translations = {
     providerRequisites: 'Реквизиты поставщика',
     actOfWork: 'Акт выполненных работ',
     invoiceForPayment: 'Счёт на оплату',
+    aiDocGenerator: 'Умный Генератор (AI)',
+    aiDocGeneratorSub: 'Опишите документ словами, и ИИ создаст его структуру',
+    describeDoc: 'Описание документа (условия, суммы, стадии...)',
+    docPromptPlaceholder: 'Например: Договор оказания услуг SMM, 3 этапа оплаты, общая сумма 1 000 000 тенге...',
+    generatingDoc: 'ИИ создает документ...',
+
 
     // Banks
     multiBankDashboard: 'Мультибанковский дашборд',
@@ -283,7 +289,81 @@ export const translations = {
     add: 'Добавить',
     edit: 'Редактировать',
     noData: 'Нет данных',
+
+    // Notifications
+    notifications: 'Уведомления',
+    noNotifications: 'Уведомлений нет',
+    markAllRead: 'Прочитать все',
+    milestoneOverdue: 'Этап просрочен',
+    milestoneDueSoon: 'Этап скоро истекает',
+    overdueAlert: 'Просрочен на',
+    dueDays: 'дн.',
+
+    // Transaction History
+    transactionHistory: 'История транзакций',
+    transactionHistorySub: 'Все доходы и расходы по всем бизнесам',
+    allTransactions: 'Все транзакции',
+    filterType: 'Тип',
+    filterCategory: 'Категория',
+    filterAll: 'Все',
+    filterIncome: 'Доходы',
+    filterExpense: 'Расходы',
+    searchTransactions: 'Поиск...',
+    noTransactions: 'Транзакций пока нет',
+    totalIncoming: 'Всего доходов',
+    totalOutgoing: 'Всего расходов',
+
+    // Tax Forecast
+    taxForecast: 'Прогноз налогов',
+    taxForecastSub: 'ИИ предсказывает налоги на следующий квартал',
+    forecastNextQuarter: 'Прогноз на квартал',
+    forecastBtn: 'Спрогнозировать',
+    forecastLoading: 'ИИ анализирует тренды...',
+    forecastResult: 'Прогноз налогов',
+    forecastBasis: 'На основе текущих данных',
+    currentQuarterIncome: 'Доход текущего квартала',
+
+    // Financial Advisor
+    financialAdvisor: 'ИИ Советник',
+    financialAdvisorSub: 'Персональный финансовый анализ вашего бизнеса',
+    advisorLoading: 'Анализируем ваши финансы...',
+    advisorHealthScore: 'Финансовое здоровье',
+    advisorInsights: 'Рекомендации',
+    advisorTopExpenses: 'Топ расходов',
+    advisorRefresh: 'Обновить анализ',
+    advisorNoData: 'Добавьте транзакции в раздел «Мои бизнесы» для анализа',
+
+    // Voice Input
+    voiceInput: 'Голосовой ввод',
+    listeningNow: 'Слушаю...',
+    voiceNotSupported: 'Голосовой ввод не поддерживается в этом браузере',
+    voiceResult: 'Распознано',
+    voiceHint: 'Скажите сумму и описание, например: "Канцтовары пять тысяч"',
+
+    // Businesses Module
+    businessesSub: 'Управляйте каждым бизнесом отдельно — финансы, аналитика и ИИ-советник',
+    addBusiness: '+ Добавить бизнес',
+    businessTypes: 'Магазин, кафе, сервис и другое',
+    confirmDeleteBusiness: 'Удалить этот бизнес и все его данные?',
+    errorDeletingBusiness: 'Ошибка при удалении бизнеса',
+
+    // Banks Module
+    totalBalanceAllBanks: 'Общий баланс во всех банках',
+    bankAccountsCount: 'банковских счетов',
+    displayedIn: 'Отображается в',
+
+    // Currency Converter
+    from: 'Из',
+    to: 'В',
+    result: 'Результат',
+
+    // Bank Statements
+    aiPromptLabel: 'AI Промпт для Gemini:',
+
+    // Document Generator
+    cipherNumberDate: 'Шифр/Номер и Дата',
   },
+
 
   en: {
     dashboard: 'Dashboard',
@@ -453,6 +533,12 @@ export const translations = {
     providerRequisites: 'Provider Details',
     actOfWork: 'Act of Work',
     invoiceForPayment: 'Invoice for Payment',
+    aiDocGenerator: 'Smart Generator (AI)',
+    aiDocGeneratorSub: 'Describe the document and AI will create its structure',
+    describeDoc: 'Document Description (conditions, amounts, stages...)',
+    docPromptPlaceholder: 'Example: SMM service contract, 3 payment stages, total amount 1,000,000 KZT...',
+    generatingDoc: 'AI is generating document...',
+
     multiBankDashboard: 'Multi-Bank Dashboard',
     multiBankSub: 'All your accounts in one place',
     addBankAccount: 'Add Account',
@@ -514,6 +600,83 @@ export const translations = {
     add: 'Add',
     edit: 'Edit',
     noData: 'No data',
+
+    // Notifications
+    notifications: 'Notifications',
+    noNotifications: 'No notifications',
+    markAllRead: 'Mark all read',
+    milestoneOverdue: 'Milestone overdue',
+    milestoneDueSoon: 'Milestone due soon',
+    overdueAlert: 'Overdue by',
+    dueDays: 'd.',
+
+    // Transaction History
+    transactionHistory: 'Transaction History',
+    transactionHistorySub: 'All income and expenses across all businesses',
+    allTransactions: 'All Transactions',
+    filterType: 'Type',
+    filterCategory: 'Category',
+    filterAll: 'All',
+    filterIncome: 'Income',
+    filterExpense: 'Expenses',
+    searchTransactions: 'Search...',
+    noTransactions: 'No transactions yet',
+    totalIncoming: 'Total Income',
+    totalOutgoing: 'Total Expenses',
+
+    // Tax Forecast
+    taxForecast: 'Tax Forecast',
+    taxForecastSub: 'AI predicts taxes for next quarter',
+    forecastNextQuarter: 'Next Quarter Forecast',
+    forecastBtn: 'Forecast',
+    forecastLoading: 'AI analyzing trends...',
+    forecastResult: 'Tax Forecast',
+    forecastBasis: 'Based on current data',
+    currentQuarterIncome: 'Current Quarter Income',
+
+    // Financial Advisor
+    financialAdvisor: 'AI Advisor',
+    financialAdvisorSub: 'Personal financial analysis for your business',
+    advisorLoading: 'Analyzing your finances...',
+    advisorHealthScore: 'Financial Health',
+    advisorInsights: 'Insights',
+    advisorTopExpenses: 'Top Expenses',
+    advisorRefresh: 'Refresh Analysis',
+    advisorNoData: 'Add transactions in \'My Businesses\' to get analysis',
+
+    // Voice Input
+    voiceInput: 'Voice Input',
+    listeningNow: 'Listening...',
+    voiceNotSupported: 'Voice input is not supported in this browser',
+    voiceResult: 'Recognized',
+    voiceHint: 'Say amount and description, e.g. \'Office supplies five thousand\'',
+
+    // Businesses Module
+    businessesSub: 'Manage each business separately — finances, analytics and AI advisor',
+    addBusiness: '+ Add Business',
+    businessTypes: 'Shop, cafe, service and more',
+    confirmDeleteBusiness: 'Delete this business and all its data?',
+    errorDeletingBusiness: 'Error deleting business',
+
+    // Banks Module
+    totalBalanceAllBanks: 'Total balance across all banks',
+    bankAccountsCount: 'bank accounts',
+    displayedIn: 'Displayed in',
+
+    // Currency Converter
+    from: 'From',
+    to: 'To',
+    result: 'Result',
+
+    // Bank Statements
+    aiPromptLabel: 'AI Prompt for Gemini:',
+
+    // Document Generator
+    cipherNumberDate: 'Number / Date',
+
+    getFromTransactions: 'Get from transactions',
+    transactionsDashboard: 'Transaction Dashboard',
+    analyzeTransactions: 'Analyze transactions',
 
     // Expert Accountant additions
     expertAccountant: 'Expert Accountant (Tax Code 2024-2025)',
@@ -709,6 +872,12 @@ export const translations = {
     providerRequisites: 'Жеткізуші деректемелері',
     actOfWork: 'Орындалған жұмыстар актісі',
     invoiceForPayment: 'Төлем шот-фактурасы',
+    aiDocGenerator: 'Ақылды Генератор (ЖИ)',
+    aiDocGeneratorSub: 'Құжатты сөзбен сипаттаңыз, ЖИ оның құрылымын жасайды',
+    describeDoc: 'Құжат сипаттамасы (шарттар, сомалар, кезеңдер...)',
+    docPromptPlaceholder: 'Мысалы: SMM қызметтерін көрсету шарты, 3 төлем кезеңі, жалпы сомасы 1 000 000 теңге...',
+    generatingDoc: 'ЖИ құжатты жасауда...',
+
     multiBankDashboard: 'Мультибанктік бақылау тақтасы',
     multiBankSub: 'Барлық шоттарыңыз бір жерде',
     addBankAccount: 'Шот қосу',
@@ -770,6 +939,82 @@ export const translations = {
     add: 'Қосу',
     edit: 'Өзгерту',
     noData: 'Деректер жоқ',
+
+    // Notifications
+    notifications: 'Хабарландырулар',
+    noNotifications: 'Хабарландыру жоқ',
+    markAllRead: 'Барлығын оқылды деп белгілеу',
+    milestoneOverdue: 'Кезең мерзімі өтті',
+    milestoneDueSoon: 'Кезең мерзімі жақындап қалды',
+    overdueAlert: 'Кідірді',
+    dueDays: 'күн.',
+
+    // Transaction History
+    transactionHistory: 'Транзакциялар тарихы',
+    transactionHistorySub: 'Барлық бизнестер бойынша кіріс және шығыстар',
+    allTransactions: 'Барлық транзакциялар',
+    filterType: 'Түрі',
+    filterCategory: 'Санаты',
+    filterAll: 'Барлығы',
+    filterIncome: 'Кіріс',
+    filterExpense: 'Шығыс',
+    searchTransactions: 'Іздеу...',
+    noTransactions: 'Транзакциялар әзірше жоқ',
+    totalIncoming: 'Барлық кіріс',
+    totalOutgoing: 'Барлық шығыс',
+
+    // Tax Forecast
+    taxForecast: 'Салық болжамы',
+    taxForecastSub: 'ЖИ келесі тоқсанға салықтарды болжайды',
+    forecastNextQuarter: 'Тоқсанға болжам',
+    forecastBtn: 'Болжау',
+    forecastLoading: 'ЖИ трендтерді талдауда...',
+    forecastResult: 'Салық болжамы',
+    forecastBasis: 'Ағымдағы деректер негізінде',
+    currentQuarterIncome: 'Ағымдағы тоқсан кірісі',
+
+    // Financial Advisor
+    financialAdvisor: 'ЖИ Кеңесші',
+    financialAdvisorSub: 'Бизнесіңізге арналған жеке қаржылық талдау',
+    advisorLoading: 'Қаржыларыңызды талдауда...',
+    advisorHealthScore: 'Қаржылық денсаулық',
+    advisorInsights: 'Ұсыныстар',
+    advisorTopExpenses: 'Үздік шығыстар',
+    advisorRefresh: 'Талдауды жаңарту',
+    advisorNoData: 'Талдау алу үшін «Менің бизнесім» бөліміне транзакциялар қосыңыз',
+
+    // Voice Input
+    voiceInput: 'Дауыстық енгізу',
+    listeningNow: 'Тыңдауда...',
+    voiceNotSupported: 'Дауыстық енгізу бұл браузерде қолданылмайды',
+    voiceResult: 'Танылды',
+    voiceHint: 'Сомасы мен сипаттаманы айтыңыз, мысалы: «Кеңсе тауарлары бес мың»',
+
+    // Businesses Module
+    businessesSub: 'Әрбір бизнесті жеке басқарыңыз — қаржы, аналитика және ЖІ кеңесші',
+    addBusiness: '+ Бизнес қосу',
+    businessTypes: 'Дүкен, кафе, қызмет және тағы',
+    confirmDeleteBusiness: 'Бұл бизнесті және барлық деректерді жоါу?',
+    errorDeletingBusiness: 'Бизнесті жою қатесі',
+
+    // Banks Module
+    totalBalanceAllBanks: 'Барлық банктардағы жалпы қалдық',
+    bankAccountsCount: 'банк шоттары',
+    displayedIn: 'Көрсетілді',
+
+    // Currency Converter
+    from: 'Бастап',
+    to: 'Нэтижесіне',
+    result: 'Нәтижесі',
+
+    // Bank Statements
+    aiPromptLabel: 'Gemini үшін AI промпт:',
+
+    // Document Generator
+    cipherNumberDate: 'Шифр/Нөмір және Күні',
+    getFromTransactions: 'Транзакциялардан алу',
+    transactionsDashboard: 'Транзакциялар бақылау тақтасы',
+    analyzeTransactions: 'Транзакцияларды талдау',
 
     // Expert Accountant additions
     expertAccountant: 'Сарапшы Бухгалтер (ҚР СК 2024-2025)',

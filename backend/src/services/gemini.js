@@ -254,5 +254,143 @@ ${historyText}
   return result.response.text().trim();
 }
 
-module.exports = { analyzeContract, calculateTaxes, parseTransactions, analyzeDocument, chatWithTaxExpert, chatWithBusinessAdvisor };
+/**
+ * Forecasts taxes for the next quarter based on current income
+ */
+async function forecastTaxes({ income, taxRegime, businessType, nextQuarter, currentDate }) {
+  const prompt = `Ты — старший налоговый консультант РК. На основе текущих данных составь прогноз налоговой нагрузки на ${nextQuarter}.
+
+Входные данные:
+- Текущий доход: ${income} тенге
+- Налоговый режим: ${taxRegime}
+- Тип бизнеса: ${businessType}
+- Дата: ${currentDate}
+
+Допущения для прогноза:
+- Рост дохода на 10-15% (оптимистичный) и 5% (консервативный)
+- Учти сезонные факторы
+
+Ответ СТРОГО в JSON:
+{
+  "nextQuarter": "${nextQuarter}",
+  "currentIncome": ${income},
+  "conservativeIncome": число,
+  "optimisticIncome": число,
+  "conservativeTax": число,
+  "optimisticTax": число,
+  "taxBreakdown": [
+    {"name": "название налога", "conservative": число, "optimistic": число, "description": "объяснение"}
+  ],
+  "totalConservative": число,
+  "totalOptimistic": число,
+  "recommendations": ["рекомендация 1", "рекомендация 2", "рекомендация 3"],
+  "warnings": ["предупреждение если есть"],
+  "tip": "главный совет на этот квартал"
+}
+
+Отвечай ТОЛЬКО JSON.`;
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
+  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  return JSON.parse(cleaned);
+}
+
+/**
+ * Analyzes overall financial health across all businesses
+ */
+async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses, businessCount, currentDate }) {
+  const categoryMap = {};
+  transactions.forEach(tx => {
+    if (tx.type === 'expense') {
+      categoryMap[tx.category] = (categoryMap[tx.category] || 0) + Number(tx.amount);
+    }
+  });
+  const topCategories = Object.entries(categoryMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([cat, amt]) => ({ category: cat, amount: amt }));
+
+  const profit = totalIncome - totalExpenses;
+
+  const prompt = `Ты — персональный финансовый советник. Проанализируй финансовое состояние бизнеса на ${currentDate}.
+
+Данные:
+- Бизнесов: ${businessCount}
+- Общий доход: ${totalIncome} тенге
+- Общие расходы: ${totalExpenses} тенге
+- Чистая прибыль: ${profit} тенге
+- Маржа: ${totalIncome > 0 ? Math.round((profit / totalIncome) * 100) : 0}%
+- Топ расходных категорий: ${JSON.stringify(topCategories)}
+- Всего транзакций: ${transactions.length}
+
+Оцени финансовое здоровье бизнеса по 100-балльной шкале и дай рекомендации.
+
+Ответ СТРОГО в JSON:
+{
+  "healthScore": число_от_0_до_100,
+  "healthLabel": "Отлично|Хорошо|Нормально|Плохо|Критично",
+  "healthColor": "emerald|blue|amber|orange|red",
+  "summary": "2-3 предложения об общем финансовом состоянии",
+  "insights": [
+    {"icon": "эмодзи", "title": "заголовок", "text": "подробное описание", "type": "positive|neutral|warning|danger"}
+  ],
+  "topExpenses": ${JSON.stringify(topCategories)},
+  "recommendations": ["конкретная рекомендация 1", "конкретная рекомендация 2", "конкретная рекомендация 3"],
+  "monthlyTarget": число_рекомендуемого_дохода_в_месяц
+}
+
+Отвечай ТОЛЬКО JSON. Определи язык контекста и отвечай на нём (русский по умолчанию).`;
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
+  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  return JSON.parse(cleaned);
+}
+
+/**
+ * Generates a professional PDF document structure (pdfmake JSON) based on user description
+ * @param {string} promptText
+ * @returns {Promise<Object>} pdfmake document definition
+ */
+async function generateDocumentContent(promptText) {
+  const prompt = `Ты — профессиональный помощник по подготовке юридических и финансовых документов в Казахстане.
+Твоя задача: создать структуру документа для библиотеки pdfmake на основе описания пользователя.
+
+ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ К СТРУКТУРЕ:
+1. Использовать шрифт 'TimesNewRoman' (уже настроен в системе).
+2. fontSize для основного текста: 11.
+3. Должен быть заголовок (bold: true, alignment: 'center').
+4. Профессиональный отступ (margins).
+5. Если в описании есть суммы, сроки или условия — оформи их в таблицу или маркированный список.
+6. Язык документа должен соответствовать языку запроса пользователя (русский, казахский или английский).
+
+ТРЕБОВАНИЯ К ФОРМАТУ (pdfmake):
+- Ответ должен быть СТРОГО валидным JSON объектом, который можно передать в pdfMake.createPdf().
+- Используй стандартные ключи: "content", "styles", "defaultStyle".
+- В "defaultStyle" ОБЯЗАТЕЛЬНО укажи { "font": "TimesNewRoman" }.
+
+Описание документа:
+"${promptText}"
+
+Верни ТОЛЬКО JSON объект. Без лишних слов и markdown-разметки.`;
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
+  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  return JSON.parse(cleaned);
+}
+
+module.exports = {
+  analyzeContract,
+  calculateTaxes,
+  parseTransactions,
+  analyzeDocument,
+  chatWithTaxExpert,
+  chatWithBusinessAdvisor,
+  forecastTaxes,
+  analyzeFinancialHealth,
+  generateDocumentContent
+};
+
 

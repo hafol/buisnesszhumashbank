@@ -214,4 +214,58 @@ router.get('/payroll-history', authMiddleware, async (req, res) => {
     }
 });
 
+// POST /api/ai/forecast — Tax forecast for next quarter
+router.post('/forecast', authMiddleware, async (req, res) => {
+    try {
+        const { income, taxRegime, businessType, period } = req.body;
+        if (!income || income < 0) {
+            return res.status(400).json({ error: 'Укажите сумму дохода' });
+        }
+
+        const { forecastTaxes } = require('../services/gemini');
+        const nextQuarter = getNextQuarter();
+        const result = await forecastTaxes({
+            income: parseFloat(income),
+            taxRegime: taxRegime || 'simplified',
+            businessType: businessType || 'IP',
+            period,
+            nextQuarter,
+            currentDate: new Date().toISOString().split('T')[0]
+        });
+        res.json(result);
+    } catch (err) {
+        console.error('Forecast error:', err);
+        res.status(500).json({ error: 'Ошибка прогноза: ' + err.message });
+    }
+});
+
+// POST /api/ai/advisor — Financial health analysis
+router.post('/advisor', authMiddleware, async (req, res) => {
+    try {
+        const { transactions, totalIncome, totalExpenses, businessCount } = req.body;
+        const { analyzeFinancialHealth } = require('../services/gemini');
+        const result = await analyzeFinancialHealth({
+            transactions: transactions || [],
+            totalIncome: totalIncome || 0,
+            totalExpenses: totalExpenses || 0,
+            businessCount: businessCount || 0,
+            currentDate: new Date().toISOString().split('T')[0]
+        });
+        res.json(result);
+    } catch (err) {
+        console.error('Advisor error:', err);
+        res.status(500).json({ error: 'Ошибка советника: ' + err.message });
+    }
+});
+
+function getNextQuarter() {
+    const now = new Date();
+    const q = Math.floor(now.getMonth() / 3);
+    const nextQ = (q + 1) % 4;
+    const year = q === 3 ? now.getFullYear() + 1 : now.getFullYear();
+    const months = ['Q1 (Янв-Мар)', 'Q2 (Апр-Июн)', 'Q3 (Июл-Сен)', 'Q4 (Окт-Дек)'];
+    return `${months[nextQ]} ${year}`;
+}
+
 module.exports = router;
+

@@ -77,7 +77,10 @@ export const aiApi = {
     parsePayroll: (formData: FormData) => request<any>('/api/ai/parse-payroll', { method: 'POST', body: formData }),
     payrollHistory: () => request<any[]>('/api/ai/payroll-history'),
     taxChat: (body: object) => request<any>('/api/ai/tax-chat', { method: 'POST', body: JSON.stringify(body) }),
+    forecast: (body: object) => request<any>('/api/ai/forecast', { method: 'POST', body: JSON.stringify(body) }),
+    advisor: (body: object) => request<any>('/api/ai/advisor', { method: 'POST', body: JSON.stringify(body) }),
 };
+
 
 // Exchange
 export const exchangeApi = {
@@ -112,5 +115,6 @@ export const businessAiApi = {
     getHistory: (businessId: string) => request<any[]>(`/api/businesses/${businessId}/ai/history`),
     sendMessage: (businessId: string, message: string) => request<any>(`/api/businesses/${businessId}/ai/chat`, { method: 'POST', body: JSON.stringify({ message }) }),
     clearHistory: (businessId: string) => request<any>(`/api/businesses/${businessId}/ai/history`, { method: 'DELETE' }),
+    generateDoc: (prompt: string) => request<any>('/api/businesses/temp/ai/generate-json-doc', { method: 'POST', body: JSON.stringify({ prompt }) }),
 };
 

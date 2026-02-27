@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, FolderKanban, Receipt, Calculator, FileText,
   Building2, ArrowLeftRight, Menu, X, Sun, Moon,
@@ -12,6 +12,10 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
+import pdfMake from 'pdfmake/build/pdfmake';
+import { pdfFonts } from './vfs_fonts';
+
+
 import { cn } from './utils/cn';
 import { translations } from './constants/translations';
 import type { Language, Theme, Currency, Project } from './types';
@@ -24,6 +28,17 @@ import { RegisterPage } from './pages/RegisterPage';
 import { SubscriptionPaywall } from './components/SubscriptionPaywall';
 import { bankAccountsApi, projectsApi, documentsApi, exchangeApi, receiptsApi, aiApi, BASE_URL, businessesApi, businessTxApi, businessAiApi } from './services/api';
 
+export const CubeLoader = ({ className = '', scale = 1 }: { className?: string, scale?: number }) => (
+  <div className={cn("loading-container", className)} style={{ transform: `scale(${scale})`, transformOrigin: 'center' }}>
+    <div className="loader">
+      <div className="cube" />
+      <div className="cube" />
+      <div className="cube" />
+      <div className="cube" />
+    </div>
+  </div>
+);
+
 // Auth Gate - decides which page to show
 export function App() {
   const { loading } = useAuth();
@@ -33,6 +48,20 @@ export function App() {
   });
   const { user } = useAuth();
 
+  useEffect(() => {
+    // Configure pdfMake to use our custom Times New Roman (Tinos) fonts
+    console.log('Initializing pdfMake VFS...', Object.keys(pdfFonts));
+    pdfMake.vfs = pdfFonts;
+    pdfMake.fonts = {
+      TimesNewRoman: {
+        normal: 'TimesNewRoman-Regular.ttf',
+        bold: 'TimesNewRoman-Bold.ttf',
+        italics: 'TimesNewRoman-Regular.ttf',
+        bolditalics: 'TimesNewRoman-Bold.ttf'
+      }
+    };
+  }, []);
+
   const handleLanguageChange = (l: Language) => {
     setLanguage(l);
     localStorage.setItem('bzb_lang', l);
@@ -41,9 +70,9 @@ export function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white/60">Загрузка...</p>
+        <div className="text-center flex flex-col items-center">
+          <CubeLoader className="mb-8" />
+          <p className="text-white/60">{translations[language].loading || 'Загрузка...'}</p>
         </div>
       </div>
     );
@@ -75,12 +104,17 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
   const [documents, setDocuments] = useState<any[]>([]);
   const [receipts, setReceipts] = useState<any[]>([]);
   const [businesses, setBusinesses] = useState<any[]>([]);
+  const [allTransactions, setAllTransactions] = useState<any[]>([]);
   const [exchangeRates, setExchangeRates] = useState<any>(mockExchangeRates);
   const [loading, setLoading] = useState(true);
-  console.log('App loading state:', loading); // Use it
+  console.log('App loading state:', loading);
   const [creatingDemo, setCreatingDemo] = useState(false);
   const [showAddBank, setShowAddBank] = useState(false);
   const [payrollTransactions, setPayrollTransactions] = useState<any[]>([]);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState<{ id: string; type: string; title: string; desc: string; read: boolean; }[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleAddBank = async (bankData: any) => {
     try {
@@ -163,6 +197,19 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
         setExchangeRates(rats || mockExchangeRates);
         setReceipts(recs || []);
         setBusinesses(bizs || []);
+
+        // Fetch ALL transactions from all businesses
+        if (bizs && bizs.length > 0) {
+          const txArrays = await Promise.all(
+            bizs.map((b: any) => businessTxApi.list(b.id).catch(() => []))
+          );
+          const flat = txArrays.flat().map((tx: any) => ({
+            ...tx,
+            businessName: bizs.find((b: any) => b.id === tx.business_id)?.name || ''
+          }));
+          flat.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          setAllTransactions(flat);
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {
@@ -172,18 +219,56 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
     fetchData();
   }, []);
 
+  // Build notifications from overdue / due-soon milestones
+  useEffect(() => {
+    if (!projects.length) return;
+    const t = translations[language];
+    const today = new Date();
+    const notes: typeof notifications = [];
+    projects.forEach((proj: any) => {
+      (proj.milestones || []).forEach((m: any) => {
+        if (m.status === 'paid') return;
+        const due = m.due_date || m.deadline;
+        if (!due) return;
+        const dueDate = new Date(due);
+        const diffDays = Math.round((dueDate.getTime() - today.getTime()) / 86400000);
+        if (diffDays < 0) {
+          notes.push({
+            id: `overdue-${m.id || m.name}`,
+            type: 'danger',
+            title: t.milestoneOverdue,
+            desc: `${proj.name}: "${m.description || m.name}" — ${t.overdueAlert} ${Math.abs(diffDays)} ${t.dueDays}`,
+            read: false
+          });
+        } else if (diffDays <= 3) {
+          notes.push({
+            id: `soon-${m.id || m.name}`,
+            type: 'warning',
+            title: t.milestoneDueSoon,
+            desc: `${proj.name}: "${m.description || m.name}" — ${diffDays} ${t.dueDays}`,
+            read: false
+          });
+        }
+      });
+    });
+    setNotifications(notes);
+  }, [projects, language]);
+
+
   const t = translations[language];
   const isDark = theme === 'dark';
 
   const modules = [
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
     { id: 'businesses', icon: Building, label: t.businesses || 'Мои Бизнесы' },
+    { id: 'transactions', icon: ArrowUpRight, label: t.transactionHistory || 'История' },
+    { id: 'advisor', icon: Star, label: t.financialAdvisor || 'ИИ Советник' },
     { id: 'projects', icon: FolderKanban, label: t.projects },
     { id: 'cashRegister', icon: Receipt, label: t.cashRegister },
     { id: 'taxAccountant', icon: Calculator, label: t.taxAccountant, isPremium: true },
     { id: 'bankStatements', icon: FileText, label: t.bankStatements, isPremium: true },
     { id: 'documents', icon: FileSearch, label: t.documents, isPremium: true },
-    { id: 'docGen', icon: Printer, label: t.docGenerator || 'Генератор', isPremium: true },
+    { id: 'docGen', icon: Printer, label: t.docGenerator || 'Generator', isPremium: true },
     { id: 'banks', icon: Building2, label: t.banks },
     { id: 'exchange', icon: ArrowLeftRight, label: t.exchange },
   ];
@@ -200,7 +285,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
   };
 
   const formatCurrency = (amount: number, currency: Currency = displayCurrency): string => {
-    const symbols: Record<Currency, string> = { KZT: '₸', USD: '$', EUR: '€', RUB: '₽' };
+    const symbols: Record<Currency, string> = { KZT: '\u20B8', USD: '$', EUR: '\u20AC', RUB: '\u20BD' };
     return `${symbols[currency]}${amount.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
@@ -434,6 +519,56 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
                 {language.toUpperCase()}
               </button>
 
+              {/* Notification Bell */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={cn(
+                    'relative p-2.5 rounded-xl transition-all border',
+                    isDark ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-100 text-slate-600'
+                  )}
+                  title={t.notifications}
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {notifications.filter(n => !n.read).length}
+                    </span>
+                  )}
+                </button>
+                {showNotifications && (
+                  <div className={cn(
+                    'absolute right-0 top-full mt-2 w-80 rounded-2xl border shadow-2xl z-50 overflow-hidden',
+                    isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
+                  )}>
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/20">
+                      <span className="font-bold text-sm">{t.notifications}</span>
+                      <button
+                        onClick={() => { setNotifications(notifications.map(n => ({ ...n, read: true }))); }}
+                        className="text-xs text-emerald-500 hover:underline"
+                      >{t.markAllRead}</button>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className={cn('text-center py-6 text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.noNotifications}</p>
+                      ) : notifications.map(n => (
+                        <div key={n.id} className={cn(
+                          'px-4 py-3 border-b last:border-0 flex items-start gap-3',
+                          !n.read && (isDark ? 'bg-slate-800/60' : 'bg-amber-50/60'),
+                          isDark ? 'border-slate-700/50' : 'border-slate-100'
+                        )}>
+                          <div className={cn('w-2 h-2 rounded-full mt-1.5 flex-shrink-0', n.type === 'danger' ? 'bg-red-500' : 'bg-amber-400')} />
+                          <div>
+                            <p className="text-xs font-bold">{n.title}</p>
+                            <p className={cn('text-xs mt-0.5', isDark ? 'text-slate-400' : 'text-slate-500')}>{n.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {!isPremium && (
                 <button
                   onClick={() => setShowPaywall(true)}
@@ -499,6 +634,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
               setActiveModule={setActiveModule}
               onFillDemo={handleFillDemoData}
               creatingDemo={creatingDemo}
+              transactions={allTransactions}
             />
           )}
           {activeModule === 'businesses' && (
@@ -576,7 +712,25 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           {activeModule === 'exchange' && (
             <ExchangeModule t={t} isDark={isDark} exchangeRates={exchangeRates} language={language} />
           )}
+          {activeModule === 'transactions' && (
+            <TransactionHistoryModule
+              t={t}
+              isDark={isDark}
+              transactions={allTransactions}
+              formatCurrency={formatCurrency}
+            />
+          )}
+          {activeModule === 'advisor' && (
+            <FinancialAdvisorModule
+              t={t}
+              isDark={isDark}
+              transactions={allTransactions}
+              businesses={businesses}
+              formatCurrency={formatCurrency}
+            />
+          )}
         </div>
+
       </main>
 
       {/* Add Bank Modal */}
@@ -642,10 +796,10 @@ function AddBankModal({ t, isDark, onClose, onAdd }: any) {
                   isDark ? 'bg-slate-700 border-slate-600 focus:ring-emerald-500' : 'bg-slate-50 border-slate-200 focus:ring-emerald-500'
                 )}
               >
-                <option value="KZT">KZT (₸)</option>
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="RUB">RUB (₽)</option>
+                <option value="KZT">{'₸'} KZT</option>
+                <option value="USD">$ USD</option>
+                <option value="EUR">{'€'} EUR</option>
+                <option value="RUB">{'₽'} RUB</option>
               </select>
             </div>
             <div>
@@ -749,20 +903,23 @@ function CurrencyToggle({ current, onChange, isDark }: {
 function DashboardModule({
   t, isDark, formatCurrency, totalBalance, displayCurrency,
   bankAccounts, projects, documents, theme, setTheme,
-  setActiveModule, onFillDemo, creatingDemo
+  setActiveModule, onFillDemo, creatingDemo, transactions
 }: any) {
   console.log('Dashboard context:', { displayCurrency, documents, theme }); // Use them
   const activeProjectsCount = (projects || []).filter((p: any) => p.status === 'active').length;
 
-  // Stats calculation
-  const monthlyIncome = 0; // Will be connected to transactions
-  const monthlyExpenses = 0; // Will be connected to transactions
-  const pendingTaxes = 0; // Will be connected to AI tax calculator
+  // Calculate real stats from transactions (current month)
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const thisMothTx = (transactions || []).filter((tx: any) => (tx.date || '').startsWith(currentMonth));
+  const monthlyIncome = thisMothTx.filter((tx: any) => tx.type === 'income').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+  const monthlyExpenses = thisMothTx.filter((tx: any) => tx.type === 'expense').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+  const pendingTaxes = 0; // Connected via Tax Accountant module
 
   const stats = [
     { label: t.totalBalance, value: formatCurrency(totalBalance), icon: Wallet, color: 'from-emerald-500 to-teal-600', trend: '+12.5%', trendUp: true },
-    { label: t.monthlyIncome, value: formatCurrency(monthlyIncome), icon: TrendingUp, color: 'from-blue-500 to-indigo-600', trend: '+8.2%', trendUp: true },
-    { label: t.monthlyExpenses, value: formatCurrency(monthlyExpenses), icon: TrendingDown, color: 'from-rose-500 to-pink-600', trend: '-2.4%', trendUp: false },
+    { label: t.monthlyIncome, value: formatCurrency(monthlyIncome), icon: TrendingUp, color: 'from-blue-500 to-indigo-600', trend: monthlyIncome > 0 ? '✓' : '—', trendUp: true },
+    { label: t.monthlyExpenses, value: formatCurrency(monthlyExpenses), icon: TrendingDown, color: 'from-rose-500 to-pink-600', trend: monthlyExpenses > 0 ? '✓' : '—', trendUp: false },
     { label: t.pendingTaxes, value: formatCurrency(pendingTaxes), icon: Calculator, color: 'from-amber-500 to-orange-600', trend: 'Due in 12d', trendUp: null },
   ];
 
@@ -1230,7 +1387,17 @@ function NewProjectModal({ isDark, t, onClose, onAdd }: any) {
     e.preventDefault();
     setLoading(true);
     try {
-      const newProject = await projectsApi.create({ ...formData, milestones });
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        totalCost: formData.total_cost,
+        contractorName: formData.contractor_name,
+        contractorIin: formData.contractor_iin,
+        contractorPhone: formData.contractor_phone,
+        contractorEmail: formData.contractor_email,
+        milestones
+      };
+      const newProject = await projectsApi.create(payload);
       onAdd(newProject);
       onClose();
     } catch (err) {
@@ -1961,7 +2128,7 @@ function TaxAccountantModule({ t, isDark, formatCurrency, payrollTransactions, u
         >
           {calculating ? (
             <>
-              <RefreshCw className="w-5 h-5 animate-spin" />
+              <CubeLoader scale={0.3} />
               {t.calculatedExpert}
             </>
           ) : (
@@ -2260,7 +2427,7 @@ function BankStatementsModule({ t, isDark, formatCurrency, payrollTransactions, 
           >
             {parsing ? (
               <div className="flex flex-col items-center gap-2">
-                <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                <CubeLoader scale={0.5} className="mb-2" />
                 <span className="text-sm font-medium">{t.parsing}</span>
               </div>
             ) : (
@@ -2280,7 +2447,7 @@ function BankStatementsModule({ t, isDark, formatCurrency, payrollTransactions, 
         )}>
           <div className="flex items-center gap-2 mb-2">
             <Bot className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-medium text-purple-500">AI Prompt для Gemini:</span>
+            <span className="text-sm font-medium text-purple-500">{t.aiPromptLabel || 'AI Prompt for Gemini:'}</span>
           </div>
           <p className={cn('text-xs font-mono', isDark ? 'text-slate-400' : 'text-slate-600')}>
             "Parse this bank statement and extract all transactions. Categorize them into: income, office, payroll, taxes, transfer, other. For each transaction, provide date, counterparty, description, type, and amount."
@@ -2400,8 +2567,67 @@ function BankStatementsModule({ t, isDark, formatCurrency, payrollTransactions, 
   );
 }
 
+// AI Document Generator Component
+function AIDocGenerator({ t, isDark }: any) {
+  const [prompt, setPrompt] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+    setLoading(true);
+    try {
+      const docDefinition = await businessAiApi.generateDoc(prompt);
+
+      // Ensure default style is set if AI forgot
+      if (!docDefinition.defaultStyle) {
+        docDefinition.defaultStyle = { font: 'TimesNewRoman', fontSize: 11 };
+      }
+
+      pdfMake.createPdf(docDefinition).download(`AI_Document_${new Date().getTime()}.pdf`);
+    } catch (err: any) {
+      alert(t.error + ': ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium">{t.describeDoc}</label>
+        <p className="text-xs text-slate-500">{t.aiDocGeneratorSub}</p>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder={t.docPromptPlaceholder}
+          className={cn(
+            'w-full h-40 px-4 py-3 rounded-2xl border outline-none transition-all resize-none',
+            isDark ? 'bg-slate-900 border-slate-700 text-white focus:border-blue-500' : 'bg-white border-slate-200 focus:border-blue-500'
+          )}
+        />
+      </div>
+      <button
+        onClick={handleGenerate}
+        disabled={loading || !prompt.trim()}
+        className={cn(
+          'w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95',
+          loading || !prompt.trim() ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+        )}
+      >
+        {loading ? (
+          <RefreshCw className="w-5 h-5 animate-spin" />
+        ) : (
+          <Sparkles className="w-5 h-5" />
+        )}
+        {loading ? t.generatingDoc : t.generateNewDoc}
+      </button>
+    </div>
+  );
+}
+
 // Document Generator Module
 function DocumentGeneratorModule({ t, isDark }: any) {
+  const [mode, setMode] = useState<'manual' | 'ai'>('manual');
   const [docType, setDocType] = useState<'invoice' | 'act'>('invoice');
   const [docLang, setDocLang] = useState<'ru' | 'en' | 'kz'>('ru');
   const [data, setData] = useState({
@@ -2424,155 +2650,288 @@ function DocumentGeneratorModule({ t, isDark }: any) {
   };
 
   const generatePDF = async () => {
-    // In a real scenario, we'd use jspdf here.
-    // Since I can't run npm install, I'll alert the user and show a mock success.
-    alert(`Генерация PDF (${docType}) на языке ${docLang}...\nПожалуйста, убедитесь, что вы запустили 'npm install jspdf jspdf-autotable'`);
+    const isAct = docType === 'act';
+    const totalAmount = data.items.reduce((sum, it) => sum + (it.qty * it.price), 0);
+    const taxPrefix = (docLang === 'kz') ? 'ҚҚС: 0₸' : (docLang === 'en') ? 'VAT: 0₸' : 'НДС: 0₸';
+    const totalPrefix = (docLang === 'kz') ? 'Барлығы' : (docLang === 'en') ? 'Total' : 'Итого';
+
+    let titleStr = '';
+    if (docLang === 'kz') titleStr = isAct ? 'Орындалған жұмыстар актісі' : 'Төлем шот-фактурасы';
+    else if (docLang === 'en') titleStr = isAct ? 'Act of Work Performed' : 'Invoice for Payment';
+    else titleStr = isAct ? 'Акт выполненных работ' : 'Счет на оплату';
+
+    const docDefinition: any = {
+      defaultStyle: {
+        font: 'TimesNewRoman',
+        fontSize: 11
+      },
+      content: [
+        {
+          text: `${titleStr} № ${data.number} ${docLang === 'en' ? 'dated' : docLang === 'kz' ? 'күні' : 'от'} ${data.date}`,
+          style: 'header',
+          alignment: 'center',
+          margin: [0, 0, 0, 20]
+        },
+        {
+          columns: [
+            { width: '30%', text: `${docLang === 'kz' ? 'Жеткізуші' : docLang === 'en' ? 'Provider' : 'Поставщик'}:`, bold: true },
+            { width: '70%', text: `${data.providerName}, ${docLang === 'kz' ? 'БСН' : docLang === 'en' ? 'BIN' : 'БИН/ИИН'}: ${data.providerBin}` }
+          ],
+          margin: [0, 0, 0, 5]
+        },
+        {
+          columns: [
+            { width: '30%', text: `${docLang === 'kz' ? 'Сатып алушы' : docLang === 'en' ? 'Customer' : 'Покупатель'}:`, bold: true },
+            { width: '70%', text: `${data.clientName || '________________'}, ${docLang === 'kz' ? 'БСН' : docLang === 'en' ? 'BIN' : 'БИН/ИИН'}: ${data.clientBin || '________________'}` }
+          ],
+          margin: [0, 0, 0, 5]
+        },
+        {
+          columns: [
+            { width: '30%', text: `${docLang === 'kz' ? 'Негіздеме' : docLang === 'en' ? 'Basis' : 'Основание'}:`, bold: true },
+            { width: '70%', text: data.basis || '________________________________' }
+          ],
+          margin: [0, 0, 0, 20]
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', '*', 'auto', 'auto', 'auto'],
+            body: [
+              [
+                { text: '№', bold: true },
+                { text: docLang === 'kz' ? 'Атауы' : docLang === 'en' ? 'Description' : 'Наименование', bold: true },
+                { text: docLang === 'kz' ? 'Саны' : docLang === 'en' ? 'Qty' : 'Кол-во', bold: true },
+                { text: docLang === 'kz' ? 'Бағасы' : docLang === 'en' ? 'Price' : 'Цена', bold: true },
+                { text: docLang === 'kz' ? 'Сомасы' : docLang === 'en' ? 'Amount' : 'Сумма', bold: true }
+              ],
+              ...data.items.map((item, index) => [
+                index + 1,
+                item.desc,
+                item.qty,
+                `${item.price.toLocaleString()} ₸`,
+                `${(item.qty * item.price).toLocaleString()} ₸`
+              ]),
+              [
+                { text: totalPrefix, colSpan: 4, alignment: 'right', bold: true },
+                {}, {}, {},
+                { text: `${totalAmount.toLocaleString()} ₸`, bold: true }
+              ],
+              [
+                { text: taxPrefix, colSpan: 5, alignment: 'right', italics: true },
+                {}, {}, {}, {}
+              ]
+            ]
+          },
+          margin: [0, 0, 0, 30]
+        },
+        {
+          columns: [
+            {
+              width: '50%',
+              text: `${docLang === 'kz' ? 'Жеткізуші қолы' : docLang === 'en' ? 'Provider Signature' : 'Подпись поставщика'}:\n\n__________________`
+            },
+            {
+              width: '50%',
+              text: `${docLang === 'kz' ? 'Сатып алушы қолы' : docLang === 'en' ? 'Customer Signature' : 'Подпись покупателя'}:\n\n__________________`,
+              alignment: 'right'
+            }
+          ]
+        }
+      ],
+      styles: {
+        header: {
+          fontSize: 16,
+          bold: true
+        }
+      }
+    };
+
+    pdfMake.createPdf(docDefinition).download(`${docType}_${data.number}_${data.date}.pdf`);
   };
 
   return (
     <div className="space-y-6">
       <div className={cn(
-        'p-6 rounded-2xl border',
+        'p-6 rounded-2xl border transition-all duration-300',
         isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'
       )}>
         <div className="flex flex-col md:flex-row gap-6">
           {/* Settings Vertical */}
           <div className="w-full md:w-64 space-y-4">
-            <h3 className="font-bold text-lg mb-4">{t.generateNewDoc}</h3>
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-500" />
+              {t.docGenerator}
+            </h3>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">{t.docTypeContract || 'Тип документа'}</label>
-              <div className="grid grid-cols-1 gap-2">
-                <button
-                  onClick={() => setDocType('invoice')}
-                  className={cn(
-                    'px-4 py-2 rounded-xl text-sm font-medium border transition-all text-left',
-                    docType === 'invoice' ? 'bg-blue-600 border-blue-600 text-white' : 'bg-transparent border-slate-700 text-slate-400'
-                  )}
-                >
-                  {t.invoiceForPayment}
-                </button>
-                <button
-                  onClick={() => setDocType('act')}
-                  className={cn(
-                    'px-4 py-2 rounded-xl text-sm font-medium border transition-all text-left',
-                    docType === 'act' ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-transparent border-slate-700 text-slate-400'
-                  )}
-                >
-                  {t.actOfWork}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase">{t.docLanguage}</label>
-              <select
-                value={docLang}
-                onChange={(e: any) => setDocLang(e.target.value)}
+            <div className="p-1 rounded-2xl bg-slate-900/50 flex flex-col gap-1 border border-slate-700/50">
+              <button
+                onClick={() => setMode('manual')}
                 className={cn(
-                  'w-full px-4 py-2 rounded-xl border outline-none text-sm',
-                  isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200'
+                  'px-4 py-2 rounded-xl text-sm font-medium transition-all text-left flex items-center gap-2',
+                  mode === 'manual' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
                 )}
               >
-                <option value="ru">Русский</option>
-                <option value="en">English</option>
-                <option value="kz">Қазақша</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Form */}
-          <div className="flex-1 space-y-6 border-l pl-0 md:pl-6 border-slate-700">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t.clientRequisites}</label>
-                <input
-                  placeholder={t.fullName}
-                  value={data.clientName}
-                  onChange={(e) => setData({ ...data, clientName: e.target.value })}
-                  className={cn('w-full px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
-                />
-                <input
-                  placeholder={t.iinBin}
-                  value={data.clientBin}
-                  onChange={(e) => setData({ ...data, clientBin: e.target.value })}
-                  className={cn('w-full px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Шифр/Номер и Дата</label>
-                <div className="flex gap-2">
-                  <input
-                    value={data.number}
-                    onChange={(e) => setData({ ...data, number: e.target.value })}
-                    className={cn('w-20 px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
-                  />
-                  <input
-                    type="date"
-                    value={data.date}
-                    onChange={(e) => setData({ ...data, date: e.target.value })}
-                    className={cn('flex-1 px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
-                  />
-                </div>
-                <input
-                  placeholder={t.invoiceBasis}
-                  value={data.basis}
-                  onChange={(e) => setData({ ...data, basis: e.target.value })}
-                  className={cn('w-full px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">{t.serviceList}</label>
-                <button onClick={addItem} className="text-xs text-blue-500 font-bold hover:underline">
-                  {t.addItem}
-                </button>
-              </div>
-              <div className="space-y-2">
-                {data.items.map((item, idx) => (
-                  <div key={idx} className="flex gap-2 flex-wrap md:flex-nowrap">
-                    <input
-                      placeholder={t.itemDescription}
-                      value={item.desc}
-                      onChange={(e) => handleItemChange(idx, 'desc', e.target.value)}
-                      className={cn('flex-1 px-4 py-2 rounded-xl border text-sm', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
-                    />
-                    <input
-                      type="number"
-                      placeholder={t.quantity}
-                      value={item.qty}
-                      onChange={(e) => handleItemChange(idx, 'qty', parseInt(e.target.value) || 0)}
-                      className={cn('w-20 px-4 py-2 rounded-xl border text-sm', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
-                    />
-                    <input
-                      type="number"
-                      placeholder={t.pricePerUnit}
-                      value={item.price}
-                      onChange={(e) => handleItemChange(idx, 'price', parseInt(e.target.value) || 0)}
-                      className={cn('w-32 px-4 py-2 rounded-xl border text-sm', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-slate-700">
-              <div className="text-right">
-                <p className="text-xs text-slate-500 uppercase font-bold">{t.totalWithVat}</p>
-                <p className="text-2xl font-bold">
-                  ₸{data.items.reduce((sum, it) => sum + (it.qty * it.price), 0).toLocaleString()}
-                </p>
-              </div>
+                <Calculator className="w-4 h-4" />
+                {t.generateNewDoc}
+              </button>
               <button
-                onClick={generatePDF}
-                className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95"
+                onClick={() => setMode('ai')}
+                className={cn(
+                  'px-4 py-2 rounded-xl text-sm font-medium transition-all text-left flex items-center gap-2',
+                  mode === 'ai' ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+                )}
               >
-                <Download className="w-5 h-5" />
-                {t.downloadPdf}
+                <Bot className="w-4 h-4" />
+                {t.aiDocGenerator}
               </button>
             </div>
+
+            {mode === 'manual' && (
+              <>
+                <div className="space-y-2 pt-4">
+                  <label className="text-xs font-bold text-slate-500 uppercase">{t.docTypeContract || 'Тип документа'}</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      onClick={() => setDocType('invoice')}
+                      className={cn(
+                        'px-4 py-2 rounded-xl text-sm font-medium border transition-all text-left',
+                        docType === 'invoice' ? 'bg-blue-600/20 border-blue-600 text-blue-400' : 'bg-transparent border-slate-700 text-slate-400'
+                      )}
+                    >
+                      {t.invoiceForPayment}
+                    </button>
+                    <button
+                      onClick={() => setDocType('act')}
+                      className={cn(
+                        'px-4 py-2 rounded-xl text-sm font-medium border transition-all text-left',
+                        docType === 'act' ? 'bg-emerald-600/20 border-emerald-600 text-emerald-400' : 'bg-transparent border-slate-700 text-slate-400'
+                      )}
+                    >
+                      {t.actOfWork}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">{t.docLanguage}</label>
+                  <select
+                    value={docLang}
+                    onChange={(e: any) => setDocLang(e.target.value)}
+                    className={cn(
+                      'w-full px-4 py-2 rounded-xl border outline-none text-sm',
+                      isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200'
+                    )}
+                  >
+                    <option value="ru">Русский</option>
+                    <option value="en">English</option>
+                    <option value="kz">Қазақша</option>
+                  </select>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Main Area */}
+          <div className="flex-1 border-l pl-0 md:pl-6 border-slate-700/50 min-h-[400px]">
+            {mode === 'manual' ? (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t.clientRequisites}</label>
+                    <input
+                      placeholder={t.fullName}
+                      value={data.clientName}
+                      onChange={(e) => setData({ ...data, clientName: e.target.value })}
+                      className={cn('w-full px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
+                    />
+                    <input
+                      placeholder={t.iinBin}
+                      value={data.clientBin}
+                      onChange={(e) => setData({ ...data, clientBin: e.target.value })}
+                      className={cn('w-full px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t.cipherNumberDate || 'Number / Date'}</label>
+                    <div className="flex gap-2">
+                      <input
+                        value={data.number}
+                        onChange={(e) => setData({ ...data, number: e.target.value })}
+                        className={cn('w-20 px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
+                      />
+                      <input
+                        type="date"
+                        value={data.date}
+                        onChange={(e) => setData({ ...data, date: e.target.value })}
+                        className={cn('flex-1 px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
+                      />
+                    </div>
+                    <input
+                      placeholder={t.invoiceBasis}
+                      value={data.basis}
+                      onChange={(e) => setData({ ...data, basis: e.target.value })}
+                      className={cn('w-full px-4 py-2 rounded-xl border', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium">{t.serviceList}</label>
+                    <button onClick={addItem} className="text-xs text-blue-500 font-bold hover:underline">
+                      {t.addItem}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {data.items.map((item, idx) => (
+                      <div key={idx} className="flex gap-2 flex-wrap md:flex-nowrap">
+                        <input
+                          placeholder={t.itemDescription}
+                          value={item.desc}
+                          onChange={(e) => handleItemChange(idx, 'desc', e.target.value)}
+                          className={cn('flex-1 px-4 py-2 rounded-xl border text-sm', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
+                        />
+                        <input
+                          type="number"
+                          placeholder={t.quantity}
+                          value={item.qty}
+                          onChange={(e) => handleItemChange(idx, 'qty', parseInt(e.target.value) || 0)}
+                          className={cn('w-16 px-2 py-2 rounded-xl border text-sm', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
+                        />
+                        <input
+                          type="number"
+                          placeholder={t.pricePerUnit}
+                          value={item.price}
+                          onChange={(e) => handleItemChange(idx, 'price', parseInt(e.target.value) || 0)}
+                          className={cn('w-28 px-2 py-2 rounded-xl border text-sm', isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200')}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500 uppercase font-bold">{t.totalWithVat}</p>
+                    <p className="text-2xl font-bold">
+                      {'\u20B8'}{data.items.reduce((sum, it) => sum + (it.qty * it.price), 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={generatePDF}
+                    className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg active:scale-95"
+                  >
+                    <Download className="w-5 h-5" />
+                    {t.downloadPdf}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="animate-in slide-in-from-right-4 duration-500">
+                <AIDocGenerator t={t} isDark={isDark} />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -2739,7 +3098,7 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
             )}
           >
             {uploading ? (
-              <RefreshCw className="w-5 h-5 animate-spin" />
+              <CubeLoader className="w-5 h-5" scale={0.3} />
             ) : (
               <Upload className="w-5 h-5" />
             )}
@@ -2792,7 +3151,7 @@ function DocumentsModule({ t, isDark, documents, setDocuments }: any) {
                     if (doc.file_path?.startsWith('http')) {
                       window.open(doc.file_path, '_blank');
                     } else {
-                      window.open(`${BASE_URL}/uploads/${doc.file_path}`, '_blank');
+                      window.open(`${BASE_URL} / uploads / ${doc.file_path}`, '_blank');
                     }
                   }}
                   className={cn(
@@ -3032,8 +3391,9 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
 
   if (!exchangeRates) {
     return (
-      <div className="p-6 text-center text-slate-500">
-        Загрузка данных обмена валют...
+      <div className="p-16 flex flex-col items-center justify-center text-slate-500 gap-6">
+        <CubeLoader />
+        <div>{t.loading || 'Загрузка данных обмена валют...'}</div>
       </div>
     );
   }
@@ -3106,7 +3466,7 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
                   <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{item.name}</p>
                 </div>
               </div>
-              <p className="text-2xl font-bold">₸{item.rate?.toFixed(2) || '0.00'}</p>
+              <p className="text-2xl font-bold">{'₸'}{item.rate?.toFixed(2) || '0.00'}</p>
             </div>
           ))}
         </div>
@@ -3202,9 +3562,9 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
               )}
             >
               {locating ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <CubeLoader className="w-4 h-4 mr-1" scale={0.25} />
               ) : (
-                <MapPin className="w-4 h-4" />
+                <MapPin className="w-4 h-4 mr-1" />
               )}
               {t.locationDetected || 'Определить локацию'}
             </button>
@@ -3337,39 +3697,39 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
             />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Из</label>
+            <label className="block text-sm font-medium mb-2">{t.from || 'Из'}</label>
             <select className={cn(
               'w-full px-4 py-3 rounded-xl border outline-none',
               isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'
             )}>
               <option>USD ($)</option>
-              <option>EUR (€)</option>
-              <option>RUB (₽)</option>
-              <option>KZT (₸)</option>
+              <option>EUR ({'€'})</option>
+              <option>RUB ({'₽'})</option>
+              <option>KZT ({'₸'})</option>
             </select>
           </div>
           <div className="pt-7">
             <ArrowLeftRight className="w-6 h-6 text-slate-400" />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">В</label>
+            <label className="block text-sm font-medium mb-2">{t.to || 'В'}</label>
             <select className={cn(
               'w-full px-4 py-3 rounded-xl border outline-none',
               isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-slate-200'
             )}>
-              <option>KZT (₸)</option>
+              <option>KZT ({'₸'})</option>
               <option>USD ($)</option>
-              <option>EUR (€)</option>
-              <option>RUB (₽)</option>
+              <option>EUR ({'€'})</option>
+              <option>RUB ({'₽'})</option>
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Результат</label>
+            <label className="block text-sm font-medium mb-2">{t.result || 'Результат'}</label>
             <div className={cn(
               'px-4 py-3 rounded-xl font-bold text-emerald-500',
               isDark ? 'bg-slate-700' : 'bg-slate-100'
             )}>
-              ₸{exchangeRates?.usdKzt?.toLocaleString() || '450,250'}
+              {'₸'}{exchangeRates?.usdKzt?.toLocaleString() || '450,250'}
             </div>
           </div>
         </div>
@@ -3406,19 +3766,19 @@ const TX_CATEGORIES = [
   { value: 'other_expense', label: 'Другой расход', type: 'expense' },
 ];
 
-function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurrency }: any) {
+function BusinessesModule({ t, isDark, businesses, setBusinesses, formatCurrency }: any) {
   const [activeBusiness, setActiveBusiness] = useState<any>(null);
   const [showAddBusiness, setShowAddBusiness] = useState(false);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Удалить этот бизнес и все его данные?')) return;
+    if (!confirm(t.confirmDeleteBusiness || 'Delete this business and all its data?')) return;
     try {
       await businessesApi.delete(id);
       setBusinesses((prev: any[]) => prev.filter((b) => b.id !== id));
       if (activeBusiness?.id === id) setActiveBusiness(null);
     } catch {
-      alert('Ошибка при удалении бизнеса');
+      alert(t.errorDeletingBusiness || 'Error deleting business');
     }
   };
 
@@ -3438,9 +3798,9 @@ function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurr
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Мои Бизнесы</h2>
+          <h2 className="text-2xl font-bold">{t.businesses || 'My Businesses'}</h2>
           <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>
-            Управляйте каждым бизнесом отдельно — финансы, аналитика и ИИ-советник
+            {t.businessesSub || 'Manage each business separately — finances, analytics and AI advisor'}
           </p>
         </div>
         <button
@@ -3448,7 +3808,7 @@ function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurr
           className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all"
         >
           <Plus className="w-5 h-5" />
-          Добавить бизнес
+          {t.addBusiness || '+ Add Business'}
         </button>
       </div>
 
@@ -3521,9 +3881,9 @@ function BusinessesModule({ t: _t, isDark, businesses, setBusinesses, formatCurr
           <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-3', isDark ? 'bg-slate-700' : 'bg-slate-100')}>
             <Plus className="w-6 h-6 text-emerald-500" />
           </div>
-          <p className="font-semibold">Добавить бизнес</p>
+          <p className="font-semibold">{t.addBusiness || 'Add Business'}</p>
           <p className={cn('text-sm mt-1 text-center', isDark ? 'text-slate-500' : 'text-slate-400')}>
-            Магазин, кафе, сервис и другое
+            {t.businessTypes || 'Shop, cafe, service and more'}
           </p>
         </div>
       </div>
@@ -3784,7 +4144,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                   <YAxis tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} tickFormatter={v => `₸${(v / 1000).toFixed(0)}k`} />
                   <Tooltip
                     contentStyle={{ background: isDark ? '#1e293b' : '#fff', border: 'none', borderRadius: 12, fontSize: 12 }}
-                    formatter={(v: any) => [`₸${Number(v).toLocaleString()}`, undefined]}
+                    formatter={(v: any) => [`₸${Number(v).toLocaleString()} `, undefined]}
                   />
                   <Legend />
                   <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} dot={false} name="Доход" />
@@ -3813,7 +4173,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
 
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {loadingTx ? (
-                <div className="text-center py-6 text-slate-400">Загрузка...</div>
+                <div className="flex justify-center py-8"><CubeLoader scale={0.8} /></div>
               ) : transactions.length === 0 ? (
                 <div className="text-center py-8">
                   <Wallet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
@@ -3873,7 +4233,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {loadingChat ? (
-              <div className="text-center py-6 text-slate-400">Загрузка...</div>
+              <div className="flex justify-center py-8"><CubeLoader scale={0.8} /></div>
             ) : chatHistory.length === 0 ? (
               <div className={cn('p-4 rounded-2xl text-sm', isDark ? 'bg-slate-700' : 'bg-purple-50')}>
                 <div className="flex items-center gap-2 mb-2">
@@ -3908,7 +4268,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
               <div className="flex justify-start">
                 <div className={cn('p-3 rounded-2xl rounded-bl-none', isDark ? 'bg-slate-700' : 'bg-slate-100')}>
                   <div className="flex gap-1">
-                    {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                    {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15} s` }} />)}
                   </div>
                 </div>
               </div>
@@ -4062,5 +4422,388 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
         </div>
       </div>
     </div>
+  );
+}
+
+// ============================================================
+// TRANSACTION HISTORY MODULE
+// ============================================================
+function TransactionHistoryModule({ t, isDark, transactions, formatCurrency }: any) {
+  const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [search, setSearch] = useState('');
+  const [catFilter, setCatFilter] = useState('all');
+
+  const categories = ['all', ...Array.from(new Set((transactions || []).map((tx: any) => tx.category).filter(Boolean)))];
+
+  const filtered = (transactions || []).filter((tx: any) => {
+    if (filter !== 'all' && tx.type !== filter) return false;
+    if (catFilter !== 'all' && tx.category !== catFilter) return false;
+    if (search && !(`${tx.description} ${tx.businessName} ${tx.category} `).toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  const totalIn = (transactions || []).filter((tx: any) => tx.type === 'income').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+  const totalOut = (transactions || []).filter((tx: any) => tx.type === 'expense').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+
+  // Group by month for chart
+  const monthlyMap: Record<string, { income: number; expense: number }> = {};
+  (transactions || []).forEach((tx: any) => {
+    const month = (tx.date || '').slice(0, 7);
+    if (!month) return;
+    if (!monthlyMap[month]) monthlyMap[month] = { income: 0, expense: 0 };
+    if (tx.type === 'income') monthlyMap[month].income += Number(tx.amount);
+    else monthlyMap[month].expense += Number(tx.amount);
+  });
+  const chartData = Object.entries(monthlyMap).sort().slice(-6).map(([month, v]) => ({
+    month: month.slice(5),
+    income: v.income,
+    expense: v.expense
+  }));
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">{t.transactionHistory}</h1>
+        <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.transactionHistorySub}</p>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { label: t.totalIncoming, value: formatCurrency(totalIn), color: 'emerald', icon: TrendingUp },
+          { label: t.totalOutgoing, value: formatCurrency(totalOut), color: 'rose', icon: TrendingDown },
+          { label: t.netFlow, value: formatCurrency(totalIn - totalOut), color: totalIn >= totalOut ? 'blue' : 'amber', icon: Wallet },
+        ].map((card, i) => (
+          <div key={i} className={cn(
+            'p-5 rounded-2xl border',
+            isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm'
+          )}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className={cn(
+                'p-2 rounded-xl',
+                card.color === 'emerald' && 'bg-emerald-500/10 text-emerald-500',
+                card.color === 'rose' && 'bg-rose-500/10 text-rose-500',
+                card.color === 'blue' && 'bg-blue-500/10 text-blue-500',
+                card.color === 'amber' && 'bg-amber-500/10 text-amber-500',
+              )}>
+                <card.icon className="w-4 h-4" />
+              </div>
+              <span className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{card.label}</span>
+            </div>
+            <p className="text-xl font-bold">{card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Chart */}
+      {chartData.length > 0 && (
+        <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}>
+          <h3 className="font-bold mb-4">{t.monthlyIncome} / {t.monthlyExpenses}</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chartData}>
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)} k`} />
+              <Tooltip formatter={(v: any) => formatCurrency(Number(v))} />
+              <Legend />
+              <Bar dataKey="income" name={t.filterIncome} fill="#10B981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="expense" name={t.filterExpense} fill="#F43F5E" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <div className={cn('flex rounded-xl p-1', isDark ? 'bg-slate-800' : 'bg-slate-100')}>
+          {[
+            { id: 'all', label: t.filterAll },
+            { id: 'income', label: t.filterIncome },
+            { id: 'expense', label: t.filterExpense },
+          ].map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id as any)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                filter === f.id ? 'bg-emerald-500 text-white shadow-sm' : isDark ? 'text-slate-400' : 'text-slate-600'
+              )}
+            >{f.label}</button>
+          ))}
+        </div>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={t.searchTransactions}
+          className={cn(
+            'flex-1 min-w-[140px] px-4 py-2 rounded-xl border text-sm outline-none',
+            isDark ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-slate-200 placeholder-slate-400'
+          )}
+        />
+        <select
+          value={catFilter}
+          onChange={e => setCatFilter(e.target.value)}
+          className={cn(
+            'px-3 py-2 rounded-xl border text-sm outline-none',
+            isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'
+          )}
+        >
+          {categories.map((c: any) => (
+            <option key={c} value={c}>{c === 'all' ? t.filterAll : c}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Transaction List */}
+      <div className={cn('rounded-2xl border overflow-hidden', isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}>
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Wallet className="w-10 h-10 text-slate-300" />
+            <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.noTransactions}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-200/50">
+            {filtered.slice(0, 50).map((tx: any, i: number) => (
+              <div key={tx.id || i} className={cn(
+                'flex items-center justify-between px-5 py-4 hover:bg-slate-500/5 transition-colors',
+              )}>
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    'w-10 h-10 rounded-xl flex items-center justify-center text-lg',
+                    tx.type === 'income' ? 'bg-emerald-500/10' : 'bg-rose-500/10'
+                  )}>
+                    {tx.type === 'income' ? '💰' : '💸'}
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{tx.description || tx.category}</p>
+                    <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>
+                      {tx.businessName && <span className="mr-2">🏢 {tx.businessName}</span>}
+                      {tx.category && <span className="mr-2 capitalize">{tx.category}</span>}
+                      {tx.date}
+                    </p>
+                  </div>
+                </div>
+                <p className={cn('font-bold text-sm', tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500')}>
+                  {tx.type === 'income' ? '+' : '-'}{formatCurrency(Number(tx.amount))}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// FINANCIAL ADVISOR MODULE
+// ============================================================
+function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCurrency }: any) {
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const totalIncome = (transactions || []).filter((tx: any) => tx.type === 'income').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+  const totalExpenses = (transactions || []).filter((tx: any) => tx.type === 'expense').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+
+  const doAnalysis = async () => {
+    if (transactions.length === 0) return;
+    setLoading(true);
+    setError('');
+    try {
+      const result = await aiApi.advisor({
+        transactions: (transactions || []).slice(0, 50),
+        totalIncome,
+        totalExpenses,
+        businessCount: (businesses || []).length
+      });
+      setAnalysis(result);
+    } catch (err: any) {
+      setError(err.message || 'Error');
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (transactions?.length > 0) doAnalysis();
+  }, [transactions?.length]);
+
+  const scoreColor = !analysis ? 'slate' : analysis.healthScore >= 75 ? 'emerald' : analysis.healthScore >= 50 ? 'blue' : analysis.healthScore >= 30 ? 'amber' : 'red';
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{t.financialAdvisor}</h1>
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.financialAdvisorSub}</p>
+        </div>
+        {transactions?.length > 0 && (
+          <button
+            onClick={doAnalysis}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-medium hover:scale-105 transition-all disabled:opacity-50"
+          >
+            {loading ? <CubeLoader className="w-4 h-4" scale={0.25} /> : <RefreshCw className="w-4 h-4" />}
+            {t.advisorRefresh}
+          </button>
+        )}
+      </div>
+
+      {transactions?.length === 0 ? (
+        <div className={cn('p-16 rounded-2xl border-2 border-dashed text-center', isDark ? 'border-slate-700' : 'border-slate-200')}>
+          <Bot className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.advisorNoData}</p>
+        </div>
+      ) : loading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-8">
+          <CubeLoader />
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.advisorLoading}</p>
+        </div>
+      ) : error ? (
+        <div className={cn('p-6 rounded-2xl border text-center', isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200')}>
+          <p className="text-red-500">{error}</p>
+        </div>
+      ) : analysis ? (
+        <>
+          {/* Health Score */}
+          <div className={cn('p-8 rounded-3xl border flex items-center gap-8', isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}>
+            <div className="relative flex-shrink-0">
+              <svg className="w-32 h-32" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke={isDark ? '#1e293b' : '#f1f5f9'} strokeWidth="12" />
+                <circle
+                  cx="50" cy="50" r="42" fill="none"
+                  stroke={scoreColor === 'emerald' ? '#10B981' : scoreColor === 'blue' ? '#3B82F6' : scoreColor === 'amber' ? '#F59E0B' : '#EF4444'}
+                  strokeWidth="12" strokeDasharray={`${(analysis.healthScore / 100) * 264} 264`}
+                  strokeLinecap="round" transform="rotate(-90 50 50)"
+                  style={{ transition: 'stroke-dasharray 1s ease' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-3xl font-bold">{analysis.healthScore}</span>
+                <span className="text-xs text-slate-400">/100</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className={cn(
+                'inline-flex px-3 py-1 rounded-xl text-sm font-bold mb-2',
+                scoreColor === 'emerald' && 'bg-emerald-500/10 text-emerald-500',
+                scoreColor === 'blue' && 'bg-blue-500/10 text-blue-500',
+                scoreColor === 'amber' && 'bg-amber-500/10 text-amber-500',
+                scoreColor === 'red' && 'bg-red-500/10 text-red-500'
+              )}>
+                {analysis.healthLabel}
+              </div>
+              <h3 className="text-xl font-bold mb-2">{t.advisorHealthScore}</h3>
+              <p className={cn('text-sm leading-relaxed', isDark ? 'text-slate-300' : 'text-slate-600')}>{analysis.summary}</p>
+            </div>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { label: t.totalIncoming, value: formatCurrency(totalIncome), color: 'emerald' },
+              { label: t.totalOutgoing, value: formatCurrency(totalExpenses), color: 'rose' },
+              { label: t.netFlow, value: formatCurrency(totalIncome - totalExpenses), color: totalIncome >= totalExpenses ? 'blue' : 'amber' },
+            ].map((c, i) => (
+              <div key={i} className={cn('p-4 rounded-2xl border', isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}>
+                <p className={cn('text-xs mb-1', isDark ? 'text-slate-400' : 'text-slate-500')}>{c.label}</p>
+                <p className={cn('text-lg font-bold',
+                  c.color === 'emerald' && 'text-emerald-500',
+                  c.color === 'rose' && 'text-rose-500',
+                  c.color === 'blue' && 'text-blue-500',
+                  c.color === 'amber' && 'text-amber-500'
+                )}>{c.value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Insights */}
+          {Array.isArray(analysis.insights) && analysis.insights.length > 0 && (
+            <div className={cn('p-6 rounded-2xl border', isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}>
+              <h3 className="font-bold mb-4">{t.advisorInsights}</h3>
+              <div className="space-y-3">
+                {analysis.insights.map((insight: any, i: number) => (
+                  <div key={i} className={cn(
+                    'flex items-start gap-3 p-4 rounded-xl',
+                    insight.type === 'positive' && (isDark ? 'bg-emerald-900/20' : 'bg-emerald-50'),
+                    insight.type === 'warning' && (isDark ? 'bg-amber-900/20' : 'bg-amber-50'),
+                    insight.type === 'danger' && (isDark ? 'bg-red-900/20' : 'bg-red-50'),
+                    insight.type === 'neutral' && (isDark ? 'bg-slate-800' : 'bg-slate-50'),
+                  )}>
+                    <span className="text-2xl">{insight.icon}</span>
+                    <div>
+                      <p className="font-semibold text-sm">{insight.title}</p>
+                      <p className={cn('text-xs mt-0.5', isDark ? 'text-slate-300' : 'text-slate-600')}>{insight.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations */}
+          {Array.isArray(analysis.recommendations) && (
+            <div className={cn('p-6 rounded-2xl border', isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}>
+              <h3 className="font-bold mb-4">💡 {t.advisorInsights}</h3>
+              <ul className="space-y-2">
+                {analysis.recommendations.map((rec: string, i: number) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-500 text-xs flex items-center justify-center font-bold flex-shrink-0 mt-0.5">{i + 1}</span>
+                    <span className={cn('text-sm', isDark ? 'text-slate-300' : 'text-slate-600')}>{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+// ============================================================
+// VOICE INPUT BUTTON
+// ============================================================
+export function VoiceInputButton({ t, isDark, onResult }: { t: any; isDark: boolean; onResult: (text: string) => void }) {
+  const [listening, setListening] = useState(false);
+  const [supported] = useState(() => !!(window as any).SpeechRecognition || !!(window as any).webkitSpeechRecognition);
+
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert(t.voiceNotSupported);
+      return;
+    }
+    const rec = new SpeechRecognition();
+    rec.lang = 'ru-RU';
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    setListening(true);
+    rec.start();
+    rec.onresult = (event: any) => {
+      const text = event.results[0][0].transcript;
+      onResult(text);
+      setListening(false);
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+  };
+
+  if (!supported) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={startListening}
+      disabled={listening}
+      title={t.voiceInput}
+      className={cn(
+        'p-2.5 rounded-xl border transition-all',
+        listening
+          ? 'bg-red-500 border-red-400 text-white animate-pulse'
+          : isDark ? 'border-slate-600 hover:bg-slate-700 text-slate-400' : 'border-slate-200 hover:bg-slate-100 text-slate-500'
+      )}
+    >
+      {listening ? <span className="text-xs font-bold">{t.listeningNow}</span> : <MessageSquare className="w-4 h-4" />}
+    </button>
   );
 }

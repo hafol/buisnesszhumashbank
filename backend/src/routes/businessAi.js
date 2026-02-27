@@ -1,7 +1,7 @@
 const express = require('express');
 const supabase = require('../services/supabase');
 const { authMiddleware } = require('../middleware/auth');
-const { chatWithBusinessAdvisor } = require('../services/gemini');
+const { chatWithBusinessAdvisor, generateDocumentContent } = require('../services/gemini');
 
 const router = express.Router({ mergeParams: true });
 
@@ -115,6 +115,20 @@ router.delete('/history', authMiddleware, async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Ошибка очистки истории' });
+    }
+});
+
+// POST generate custom document structure
+router.post('/generate-json-doc', authMiddleware, async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        if (!prompt) return res.status(400).json({ error: 'Описание отсутствует' });
+
+        const docDefinition = await generateDocumentContent(prompt);
+        res.json(docDefinition);
+    } catch (err) {
+        console.error('AI Document generation error:', err);
+        res.status(500).json({ error: 'Ошибка генерации документа: ' + err.message });
     }
 });
 
