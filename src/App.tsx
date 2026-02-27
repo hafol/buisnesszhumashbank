@@ -104,9 +104,10 @@ export const GenerationProgressModal = ({ isOpen, progress, status, t, isDark }:
 
 const initPdfMake = () => {
   // Configure pdfMake to use our custom Times New Roman (Tinos) fonts
-  // Using explicit casting or direct assignment to bypass some lint types
-  (pdfMake as any).vfs = pdfFonts;
-  pdfMake.fonts = {
+  // Handle both ESM and CommonJS structures
+  const p = (pdfMake as any).default || pdfMake;
+  p.vfs = pdfFonts;
+  p.fonts = {
     TimesNewRoman: {
       normal: 'TimesNewRoman-Regular.ttf',
       bold: 'TimesNewRoman-Bold.ttf',
@@ -114,6 +115,7 @@ const initPdfMake = () => {
       bolditalics: 'TimesNewRoman-Bold.ttf'
     }
   };
+  console.log('pdfMake initialized with fonts:', Object.keys(p.vfs));
 };
 
 // Auth Gate - decides which page to show
@@ -2672,7 +2674,7 @@ function AIDocGenerator({ t, isDark }: any) {
       setGenStatus(t.finalizingPDF);
 
       // Robust PDF Fix: Re-initialize VFS and Fonts right before use
-      (initPdfMake as any)();
+      initPdfMake();
 
       // Ensure default style is set if AI forgot
       if (!docDefinition.defaultStyle) {
@@ -2680,7 +2682,8 @@ function AIDocGenerator({ t, isDark }: any) {
       }
 
       console.log('AI Doc Generation: Creating PDF...');
-      const pdfDocGenerator = (pdfMake as any).createPdf(docDefinition);
+      const p = (pdfMake as any).default || pdfMake;
+      const pdfDocGenerator = p.createPdf(docDefinition);
 
       // Fallback timeout: if PDF generation hangs for more than 15 seconds, close modal
       const fallbackTimeout = setTimeout(() => {
@@ -2794,8 +2797,9 @@ function DocumentGeneratorModule({ t, isDark }: any) {
     else titleStr = isAct ? 'Акт выполненных работ' : 'Счет на оплату';
 
     // Robust PDF Fix: Re-initialize VFS and Fonts right before use
-    (initPdfMake as any)();
+    initPdfMake();
 
+    const p = (pdfMake as any).default || pdfMake;
     const docDefinition: any = {
       defaultStyle: {
         font: 'TimesNewRoman',
@@ -2883,7 +2887,7 @@ function DocumentGeneratorModule({ t, isDark }: any) {
       }
     };
 
-    pdfMake.createPdf(docDefinition).download(`${docType}_${data.number}_${data.date}.pdf`);
+    p.createPdf(docDefinition).download(`${docType}_${data.number}_${data.date}.pdf`);
   };
 
   return (
