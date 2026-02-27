@@ -2663,10 +2663,12 @@ function AIDocGenerator({ t, isDark }: any) {
     }, 400);
 
     try {
+      console.log('AI Doc Generation: Requesting structure...');
       const docDefinition = await businessAiApi.generateDoc(prompt);
       clearInterval(progressInterval);
 
-      setGenProgress(90);
+      console.log('AI Doc Generation: Structure received', docDefinition);
+
       setGenStatus(t.finalizingPDF);
 
       // Robust PDF Fix: Re-initialize VFS and Fonts right before use
@@ -2677,22 +2679,26 @@ function AIDocGenerator({ t, isDark }: any) {
         docDefinition.defaultStyle = { font: 'TimesNewRoman', fontSize: 11 };
       }
 
-      // Generate the PDF as a blob to detect actual completion
+      console.log('AI Doc Generation: Creating PDF...');
       const pdfDocGenerator = (pdfMake as any).createPdf(docDefinition);
 
+      // Fallback timeout: if PDF generation hangs for more than 15 seconds, close modal
+      const fallbackTimeout = setTimeout(() => {
+        setIsGenerating(false);
+        setLoading(false);
+        alert('PDF generation timed out. Please try again.');
+        console.error('AI Doc Generation: getBlob timed out');
+      }, 15000);
+
       pdfDocGenerator.getBlob((blob: any) => {
+        clearTimeout(fallbackTimeout);
+        console.log('AI Doc Generation: PDF ready');
         setGenProgress(100);
         setGenStatus(t.downloadReady);
 
         // Trigger download
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `AI_Document_${new Date().getTime()}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        const filename = `AI_Document_${new Date().getTime()}.pdf`;
+        pdfDocGenerator.download(filename);
 
         // Close modal after delay
         setTimeout(() => {
@@ -2706,6 +2712,7 @@ function AIDocGenerator({ t, isDark }: any) {
       clearInterval(progressInterval);
       setIsGenerating(false);
       setLoading(false);
+      console.error('AI Doc Generation Error:', err);
       alert(t.error + ': ' + err.message);
     }
   };
