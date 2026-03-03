@@ -1,7 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 /**
  * Analyzes a legal contract text
@@ -355,7 +355,7 @@ async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses
  */
 async function generateDocumentContent(promptText) {
   const prompt = `Ты — профессиональный помощник по подготовке юридических и финансовых документов в Казахстане.
-Твоя задача: создать структуру документа для библиотеки pdfmake на основе описания пользователя.
+Твоя задача: создать структуру документа для библиотеки jsPDF на основе описания пользователя.
 
 ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ К СТРУКТУРЕ:
 1. Использовать шрифт 'TimesNewRoman' (уже настроен в системе).
@@ -365,10 +365,10 @@ async function generateDocumentContent(promptText) {
 5. Если в описании есть суммы, сроки или условия — оформи их в таблицу или маркированный список.
 6. Язык документа должен соответствовать языку запроса пользователя (русский, казахский или английский).
 
-ТРЕБОВАНИЯ К ФОРМАТУ (pdfmake):
-- Ответ должен быть СТРОГО валидным JSON объектом, который можно передать в pdfMake.createPdf().
-- Используй стандартные ключи: "content", "styles", "defaultStyle".
-- В "defaultStyle" ОБЯЗАТЕЛЬНО укажи { "font": "TimesNewRoman" }.
+ТРЕБОВАНИЯ К ФОРМАТУ (JSON):
+- Ответ должен быть СТРОГО валидным JSON объектом.
+- Используй ключи: "content", которые могут содержать "text", "bold", "fontSize", "alignment", и "table" (с body: [[...]]).
+- Мы используем библиотеку jsPDF для отрисовки, поэтому структура должна быть плоской и понятной.
 
 Описание документа:
 "${promptText}"

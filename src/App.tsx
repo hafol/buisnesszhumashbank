@@ -12,8 +12,9 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
-import pdfMake from 'pdfmake/build/pdfmake';
-import { pdfFonts } from './vfs_fonts';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { pdfRawFonts } from './pdfFontsRaw';
 
 
 import { cn } from './utils/cn';
@@ -102,20 +103,124 @@ export const GenerationProgressModal = ({ isOpen, progress, status, t, isDark }:
   );
 };
 
-const initPdfMake = () => {
-  // Configure pdfMake to use our custom Times New Roman (Tinos) fonts
-  // Handle both ESM and CommonJS structures
-  const p = (pdfMake as any).default || pdfMake;
-  p.vfs = pdfFonts;
-  p.fonts = {
-    TimesNewRoman: {
-      normal: 'TimesNewRoman-Regular.ttf',
-      bold: 'TimesNewRoman-Bold.ttf',
-      italics: 'TimesNewRoman-Regular.ttf',
-      bolditalics: 'TimesNewRoman-Bold.ttf'
+const initJsPDF = () => {
+  console.log('--- JS-PDF SYSTEM INITIALIZING (VERSION 2.5) ---');
+  const doc = new jsPDF();
+
+  // Add Tinos fonts to jsPDF VFS from our fonts file
+  const regBase64 = pdfRawFonts['TimesNewRoman-Regular.ttf'];
+  const boldBase64 = pdfRawFonts['TimesNewRoman-Bold.ttf'];
+
+  if (regBase64) {
+    console.log('Adding Regular font...');
+    doc.addFileToVFS('Tinos-Regular.ttf', regBase64);
+    doc.addFont('Tinos-Regular.ttf', 'Tinos', 'normal');
+  } else {
+    console.error('Regular font missing!');
+  }
+
+  if (boldBase64) {
+    console.log('Adding Bold font...');
+    doc.addFileToVFS('Tinos-Bold.ttf', boldBase64);
+    doc.addFont('Tinos-Bold.ttf', 'Tinos', 'bold');
+  } else {
+    console.error('Bold font missing!');
+  }
+
+  doc.setFont('Tinos', 'normal');
+  console.log('--- JS-PDF SYSTEM READY ---');
+  return doc;
+};
+
+// Helper for AI generation: crude conversion of docDefinition to jsPDF
+// Since we are switching libs, we'll try to handle the structure returned by Gemini
+const renderWithJsPDF = (doc: any, definition: any) => {
+  let y = 20;
+  const margin = 20;
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const addText = (text: string, options: any = {}) => {
+    if (!text) return;
+
+    // Set style
+    if (options.bold) doc.setFont('Tinos', 'bold');
+    else doc.setFont('Tinos', 'normal');
+
+    if (options.fontSize) doc.setFontSize(options.fontSize);
+    else doc.setFontSize(11);
+
+    // Alignment
+    let x = margin;
+    if (options.alignment === 'center') {
+      const textWidth = doc.getTextWidth(text);
+      x = (pageWidth - textWidth) / 2;
+    }
+
+    // Wrap text
+    const splitText = doc.splitTextToSize(text, pageWidth - margin * 2);
+    doc.text(splitText, x, y);
+    y += (splitText.length * (options.fontSize || 11) * 0.5) + 5;
+
+    // Reset font
+    doc.setFont('Tinos', 'normal');
+  };
+
+  const processNode = (node: any) => {
+    if (!node) return;
+
+    if (typeof node === 'string') {
+      addText(node);
+      return;
+    }
+
+    if (Array.isArray(node)) {
+      node.forEach(processNode);
+      return;
+    }
+
+    if (node.text) {
+      addText(node.text, node);
+    }
+
+    if (node.table) {
+      const body = node.table.body.map((row: any) =>
+        row.map((cell: any) => {
+          if (typeof cell === 'object') return cell.text || '';
+          return cell;
+        })
+      );
+
+      autoTable(doc, {
+        body,
+        startY: y,
+        theme: 'grid',
+        styles: { font: 'Tinos', fontSize: 10 },
+        headStyles: { fillColor: [44, 62, 80], font: 'Tinos' },
+        margin: { left: margin, right: margin }
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+    }
+
+    if (node.stack) {
+      node.stack.forEach(processNode);
+    }
+
+    if (node.columns) {
+      // Crude columns handling (stacking them for now to ensure readability)
+      node.columns.forEach(processNode);
+    }
+
+    if (node.content) {
+      processNode(node.content);
+    }
+
+    if (y > doc.internal.pageSize.getHeight() - 20) {
+      doc.addPage();
+      y = 20;
     }
   };
-  console.log('pdfMake initialized with fonts:', Object.keys(p.vfs));
+
+  processNode(definition.content || definition);
 };
 
 // Auth Gate - decides which page to show
@@ -128,8 +233,7 @@ export function App() {
   const { user } = useAuth();
 
   useEffect(() => {
-    console.log('Initializing pdfMake VFS...', Object.keys(pdfFonts));
-    initPdfMake();
+    console.log('PDF System ready (jsPDF)');
   }, []);
 
   const handleLanguageChange = (l: Language) => {
@@ -2673,43 +2777,22 @@ function AIDocGenerator({ t, isDark }: any) {
 
       setGenStatus(t.finalizingPDF);
 
-      // Robust PDF Fix: Re-initialize VFS and Fonts right before use
-      initPdfMake();
+      // jsPDF Migration
+      const doc = initJsPDF();
 
-      // Ensure default style is set if AI forgot
-      if (!docDefinition.defaultStyle) {
-        docDefinition.defaultStyle = { font: 'TimesNewRoman', fontSize: 11 };
-      }
+      console.log('AI Doc Generation: Rendering with jsPDF...');
+      renderWithJsPDF(doc, docDefinition);
 
-      console.log('AI Doc Generation: Creating PDF...');
-      const p = (pdfMake as any).default || pdfMake;
-      const pdfDocGenerator = p.createPdf(docDefinition);
+      console.log('AI Doc Generation: PDF ready');
+      setGenProgress(100);
+      setGenStatus(t.downloadReady);
+      doc.save(`AI_Document_${new Date().getTime()}.pdf`);
 
-      // Fallback timeout: if PDF generation hangs for more than 15 seconds, close modal
-      const fallbackTimeout = setTimeout(() => {
+      setTimeout(() => {
         setIsGenerating(false);
         setLoading(false);
-        alert('PDF generation timed out. Please try again.');
-        console.error('AI Doc Generation: getBlob timed out');
-      }, 15000);
-
-      pdfDocGenerator.getBlob((blob: any) => {
-        clearTimeout(fallbackTimeout);
-        console.log('AI Doc Generation: PDF ready');
-        setGenProgress(100);
-        setGenStatus(t.downloadReady);
-
-        // Trigger download
-        const filename = `AI_Document_${new Date().getTime()}.pdf`;
-        pdfDocGenerator.download(filename);
-
-        // Close modal after delay
-        setTimeout(() => {
-          setIsGenerating(false);
-          setLoading(false);
-          setGenProgress(0);
-        }, 1500);
-      });
+        setGenProgress(0);
+      }, 1500);
 
     } catch (err: any) {
       clearInterval(progressInterval);
@@ -2796,98 +2879,66 @@ function DocumentGeneratorModule({ t, isDark }: any) {
     else if (docLang === 'en') titleStr = isAct ? 'Act of Work Performed' : 'Invoice for Payment';
     else titleStr = isAct ? 'Акт выполненных работ' : 'Счет на оплату';
 
-    // Robust PDF Fix: Re-initialize VFS and Fonts right before use
-    initPdfMake();
+    // jsPDF Migration
+    const doc = initJsPDF();
 
-    const p = (pdfMake as any).default || pdfMake;
-    const docDefinition: any = {
-      defaultStyle: {
-        font: 'TimesNewRoman',
-        fontSize: 11
-      },
-      content: [
-        {
-          text: `${titleStr} № ${data.number} ${docLang === 'en' ? 'dated' : docLang === 'kz' ? 'күні' : 'от'} ${data.date}`,
-          style: 'header',
-          alignment: 'center',
-          margin: [0, 0, 0, 20]
-        },
-        {
-          columns: [
-            { width: '30%', text: `${docLang === 'kz' ? 'Жеткізуші' : docLang === 'en' ? 'Provider' : 'Поставщик'}:`, bold: true },
-            { width: '70%', text: `${data.providerName}, ${docLang === 'kz' ? 'БСН' : docLang === 'en' ? 'BIN' : 'БИН/ИИН'}: ${data.providerBin}` }
-          ],
-          margin: [0, 0, 0, 5]
-        },
-        {
-          columns: [
-            { width: '30%', text: `${docLang === 'kz' ? 'Сатып алушы' : docLang === 'en' ? 'Customer' : 'Покупатель'}:`, bold: true },
-            { width: '70%', text: `${data.clientName || '________________'}, ${docLang === 'kz' ? 'БСН' : docLang === 'en' ? 'BIN' : 'БИН/ИИН'}: ${data.clientBin || '________________'}` }
-          ],
-          margin: [0, 0, 0, 5]
-        },
-        {
-          columns: [
-            { width: '30%', text: `${docLang === 'kz' ? 'Негіздеме' : docLang === 'en' ? 'Basis' : 'Основание'}:`, bold: true },
-            { width: '70%', text: data.basis || '________________________________' }
-          ],
-          margin: [0, 0, 0, 20]
-        },
-        {
-          table: {
-            headerRows: 1,
-            widths: ['auto', '*', 'auto', 'auto', 'auto'],
-            body: [
-              [
-                { text: '№', bold: true },
-                { text: docLang === 'kz' ? 'Атауы' : docLang === 'en' ? 'Description' : 'Наименование', bold: true },
-                { text: docLang === 'kz' ? 'Саны' : docLang === 'en' ? 'Qty' : 'Кол-во', bold: true },
-                { text: docLang === 'kz' ? 'Бағасы' : docLang === 'en' ? 'Price' : 'Цена', bold: true },
-                { text: docLang === 'kz' ? 'Сомасы' : docLang === 'en' ? 'Amount' : 'Сумма', bold: true }
-              ],
-              ...data.items.map((item, index) => [
-                index + 1,
-                item.desc,
-                item.qty,
-                `${item.price.toLocaleString()} ₸`,
-                `${(item.qty * item.price).toLocaleString()} ₸`
-              ]),
-              [
-                { text: totalPrefix, colSpan: 4, alignment: 'right', bold: true },
-                {}, {}, {},
-                { text: `${totalAmount.toLocaleString()} ₸`, bold: true }
-              ],
-              [
-                { text: taxPrefix, colSpan: 5, alignment: 'right', italics: true },
-                {}, {}, {}, {}
-              ]
-            ]
-          },
-          margin: [0, 0, 0, 30]
-        },
-        {
-          columns: [
-            {
-              width: '50%',
-              text: `${docLang === 'kz' ? 'Жеткізуші қолы' : docLang === 'en' ? 'Provider Signature' : 'Подпись поставщика'}:\n\n__________________`
-            },
-            {
-              width: '50%',
-              text: `${docLang === 'kz' ? 'Сатып алушы қолы' : docLang === 'en' ? 'Customer Signature' : 'Подпись покупателя'}:\n\n__________________`,
-              alignment: 'right'
-            }
-          ]
-        }
-      ],
-      styles: {
-        header: {
-          fontSize: 16,
-          bold: true
-        }
-      }
-    };
+    // Header
+    doc.setFontSize(16);
+    doc.setFont('Tinos', 'bold');
+    doc.text(`${titleStr} № ${data.number} ${docLang === 'en' ? 'dated' : docLang === 'kz' ? 'күні' : 'от'} ${data.date}`, 105, 20, { align: 'center' });
 
-    p.createPdf(docDefinition).download(`${docType}_${data.number}_${data.date}.pdf`);
+    doc.setFontSize(11);
+    doc.setFont('Tinos', 'normal');
+
+    let y = 40;
+    doc.text(`${docLang === 'kz' ? 'Жеткізуші' : docLang === 'en' ? 'Provider' : 'Поставщик'}:`, 20, y);
+    doc.text(`${data.providerName}, ${docLang === 'kz' ? 'БСН' : docLang === 'en' ? 'BIN' : 'БИН/ИИН'}: ${data.providerBin}`, 60, y);
+    y += 7;
+
+    doc.text(`${docLang === 'kz' ? 'Сатып алушы' : docLang === 'en' ? 'Customer' : 'Покупатель'}:`, 20, y);
+    doc.text(`${data.clientName || '________________'}, ${docLang === 'kz' ? 'БСН' : docLang === 'en' ? 'BIN' : 'БИН/ИИН'}: ${data.clientBin || '________________'}`, 60, y);
+    y += 7;
+
+    doc.text(`${docLang === 'kz' ? 'Негіздеме' : docLang === 'en' ? 'Basis' : 'Основание'}:`, 20, y);
+    doc.text(data.basis || '________________________________', 60, y);
+    y += 15;
+
+    const tableBody = data.items.map((item, index) => [
+      index + 1,
+      item.desc,
+      item.qty,
+      `${item.price.toLocaleString()} ₸`,
+      `${(item.qty * item.price).toLocaleString()} ₸`
+    ]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [[
+        '№',
+        docLang === 'kz' ? 'Атауы' : docLang === 'en' ? 'Description' : 'Наименование',
+        docLang === 'kz' ? 'Саны' : docLang === 'en' ? 'Qty' : 'Кол-во',
+        docLang === 'kz' ? 'Бағасы' : docLang === 'en' ? 'Price' : 'Цена',
+        docLang === 'kz' ? 'Сомасы' : docLang === 'en' ? 'Amount' : 'Сумма'
+      ]],
+      body: tableBody,
+      foot: [[
+        { content: totalPrefix, colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+        { content: `${totalAmount.toLocaleString()} ₸`, styles: { fontStyle: 'bold' } }
+      ], [
+        { content: taxPrefix, colSpan: 5, styles: { halign: 'right', fontStyle: 'italic' } }
+      ]],
+      theme: 'grid',
+      styles: { font: 'Tinos', fontSize: 10 },
+      headStyles: { fillColor: [44, 62, 80], font: 'Tinos', fontStyle: 'bold' },
+      margin: { left: 20, right: 20 }
+    });
+
+    y = (doc as any).lastAutoTable.finalY + 20;
+
+    doc.text(`${docLang === 'kz' ? 'Жеткізуші қолы' : docLang === 'en' ? 'Provider Signature' : 'Подпись поставщика'}:\n\n__________________`, 20, y);
+    doc.text(`${docLang === 'kz' ? 'Сатып алушы қолы' : docLang === 'en' ? 'Customer Signature' : 'Подпись покупателя'}:\n\n__________________`, 190, y, { align: 'right' });
+
+    doc.save(`${docType}_${data.number}_${data.date}.pdf`);
   };
 
   return (
