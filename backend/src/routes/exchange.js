@@ -55,10 +55,13 @@ router.get('/rates', authMiddleware, async (req, res) => {
 
         ratesCache = {
             data: {
+                usdKzt: parseFloat((1 / data.rates.USD).toFixed(2)),
+                eurKzt: parseFloat((1 / data.rates.EUR).toFixed(2)),
+                rubKzt: parseFloat((1 / data.rates.RUB).toFixed(2)),
                 usd: { buy: parseFloat((1 / data.rates.USD).toFixed(2)) - 2, sell: parseFloat((1 / data.rates.USD).toFixed(2)) + 1 },
                 eur: { buy: parseFloat((1 / data.rates.EUR).toFixed(2)) - 3, sell: parseFloat((1 / data.rates.EUR).toFixed(2)) + 2 },
                 rub: { buy: parseFloat((1 / data.rates.RUB).toFixed(2)) - 0.05, sell: parseFloat((1 / data.rates.RUB).toFixed(2)) + 0.1 },
-                updatedAt: new Date().toISOString()
+                lastUpdated: new Date().toISOString()
             },
             timestamp: Date.now()
         };
