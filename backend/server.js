@@ -25,6 +25,7 @@ app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(cors({
     origin: [
         'http://localhost:5173',
+        'https://buisnesszhumashbank.vercel.app',
         'https://buisness-zhumash-bank.vercel.app'
     ],
     credentials: true,

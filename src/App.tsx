@@ -4200,14 +4200,14 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
       const { response } = await businessAiApi.sendMessage(business.id, msg, language);
       setChatHistory(prev => [...prev, { role: 'assistant', message: response, created_at: new Date().toISOString() }]);
     } catch {
-      setChatHistory(prev => [...prev, { role: 'assistant', message: t.aiConnectionError || 'Ошибка связи. Попробуйте ещё раз.', created_at: new Date().toISOString() }]);
+      setChatHistory(prev => [...prev, { role: 'assistant', message: t.aiConnectionError || 'AI connection error', created_at: new Date().toISOString() }]);
     } finally {
       setChatSending(false);
     }
   };
 
   const handleDeleteTx = async (txId: string) => {
-    if (!confirm(t.confirmDeleteTransaction || 'Удалить транзакцию?')) return;
+    if (!confirm(t.confirmDeleteTransaction || 'Delete transaction?')) return;
     await businessTxApi.delete(business.id, txId);
     setTransactions(prev => prev.filter(t => t.id !== txId));
   };
@@ -4220,7 +4220,7 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
           onClick={onBack}
           className={cn('flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-colors', isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-50 border border-slate-200')}
         >
-          ← {t.back || 'Назад'}
+          ← {t.back || 'Back'}
         </button>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow" style={{ backgroundColor: business.color || '#10B981' }}>
@@ -4236,9 +4236,9 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: t.income || 'Доход', value: formatCurrency(totalIncome), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-          { label: t.expense || 'Расход', value: formatCurrency(totalExpense), color: 'text-red-500', bg: 'bg-red-500/10' },
-          { label: t.profit || 'Прибыль', value: formatCurrency(profit), color: profit >= 0 ? 'text-emerald-500' : 'text-red-500', bg: profit >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10' },
+          { label: t.income || 'Income', value: formatCurrency(totalIncome), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { label: t.expense || 'Expense', value: formatCurrency(totalExpense), color: 'text-red-500', bg: 'bg-red-500/10' },
+          { label: t.profit || 'Profit', value: formatCurrency(profit), color: profit >= 0 ? 'text-emerald-500' : 'text-red-500', bg: profit >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10' },
         ].map(s => (
           <div key={s.label} className={cn('p-4 rounded-2xl border text-center', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <p className={cn('text-xs font-medium mb-1', isDark ? 'text-slate-400' : 'text-slate-500')}>{s.label}</p>
@@ -4253,7 +4253,7 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
           {/* Chart */}
           <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">{t.transactionChart || 'График транзакций'}</h3>
+              <h3 className="font-bold">{t.transactionChart || 'Transaction Chart'}</h3>
               <div className={cn('flex rounded-xl p-1', isDark ? 'bg-slate-900' : 'bg-slate-100')}>
                 {(['week', 'month', 'year'] as const).map(p => (
                   <button
@@ -4295,12 +4295,12 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
           {/* Transactions */}
           <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">{t.transactions || 'Транзакции'}</h3>
+              <h3 className="font-bold">{t.transactions || 'Transactions'}</h3>
               <button
                 onClick={() => setShowAddTx(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg text-sm font-medium hover:shadow transition-all"
               >
-                <Plus className="w-4 h-4" /> {t.add || 'Добавить'}
+                <Plus className="w-4 h-4" /> {t.add || 'Add'}
               </button>
             </div>
 
@@ -4310,7 +4310,7 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
               ) : transactions.length === 0 ? (
                 <div className="text-center py-8">
                   <Wallet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400">{t.noTransactions || 'Нет транзакций'}</p>
+                  <p className="text-sm text-slate-400">{t.noTransactions || 'No transactions yet'}</p>
                 </div>
               ) : transactions.map((tx: any) => {
                 const cat = TX_CATEGORIES.find(c => c.value === tx.category);
@@ -4321,7 +4321,7 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
                         {tx.type === 'income' ? '↑' : '↓'}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{tx.description || (cat ? t[cat.labelKey] : t.transaction) || 'Транзакция'}</p>
+                        <p className="text-sm font-medium">{tx.description || (cat ? t[cat.labelKey] : t.transaction) || 'Transaction'}</p>
                         <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>{tx.date} • {(cat ? t[cat.labelKey] : tx.category)}</p>
                       </div>
                     </div>
@@ -4350,15 +4350,15 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
               <Bot className="w-5 h-5 text-purple-500" />
             </div>
             <div>
-              <h3 className="font-bold">{t.financialAdvisor || 'ИИ-советник'}</h3>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.personalAdvisorFor || 'Персональный советник для'} {business.name}</p>
+              <h3 className="font-bold">{t.financialAdvisor || 'AI Advisor'}</h3>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.personalAdvisorFor || 'Personal advisor for'} {business.name}</p>
             </div>
             {chatHistory.length > 0 && (
               <button
-                onClick={async () => { if (confirm(t.confirmClearHistory || 'Очистить историю?')) { await businessAiApi.clearHistory(business.id); setChatHistory([]); } }}
+                onClick={async () => { if (confirm(t.confirmClearHistory || 'Clear history?')) { await businessAiApi.clearHistory(business.id); setChatHistory([]); } }}
                 className={cn('ml-auto text-xs px-2 py-1 rounded-lg', isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-100')}
               >
-                {t.clearHistory || 'Очистить'}
+                {t.clearHistory || 'Clear'}
               </button>
             )}
           </div>
@@ -4371,10 +4371,10 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
               <div className={cn('p-4 rounded-2xl text-sm', isDark ? 'bg-slate-700' : 'bg-purple-50')}>
                 <div className="flex items-center gap-2 mb-2">
                   <Bot className="w-4 h-4 text-purple-500" />
-                  <span className="font-medium text-purple-600">{t.financialAdvisor || 'ИИ-советник'}</span>
+                  <span className="font-medium text-purple-600">{t.financialAdvisor || 'AI Advisor'}</span>
                 </div>
                 <p className={isDark ? 'text-slate-300' : 'text-slate-700'}>
-                  {t.businessAdvisorGreeting || '👋 Привет! Я ваш персональный бизнес-советник.'}
+                  {t.businessAdvisorGreeting || '👋 Hello! I am your personal business advisor.'}
                 </p>
               </div>
             ) : chatHistory.map((msg: any, i: number) => (
@@ -4388,7 +4388,7 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
                   {msg.role === 'assistant' && (
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <Bot className="w-3.5 h-3.5 text-purple-500" />
-                      <span className="text-xs font-medium text-purple-500">{t.financialAdvisor || 'ИИ-советник'}</span>
+                      <span className="text-xs font-medium text-purple-500">{t.financialAdvisor || 'AI Advisor'}</span>
                     </div>
                   )}
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
@@ -4414,7 +4414,7 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              placeholder={t.businessChatPlaceholder || "Как увеличить прибыль? (Enter чтобы отправить)"}
+              placeholder={t.businessChatPlaceholder || "How to increase profit? (Enter to send)"}
               className="flex-1 bg-transparent outline-none text-sm px-2"
               disabled={chatSending}
             />
@@ -4451,14 +4451,14 @@ function AddTransactionModal({ t, isDark, businessId, onClose, onAdd }: any) {
   const filteredCats = TX_CATEGORIES.filter(c => c.type === form.type);
 
   const handleSubmit = async () => {
-    if (!form.amount || isNaN(Number(form.amount))) return alert(t.enterCorrectAmount || 'Введите корректную сумму');
+    if (!form.amount || isNaN(Number(form.amount))) return alert(t.enterCorrectAmount || 'Enter a valid amount');
     setLoading(true);
     try {
       const tx = await businessTxApi.create(businessId, form);
       onAdd(tx);
       onClose();
     } catch {
-      alert(t.errorAddingTransaction || 'Ошибка при добавлении транзакции');
+      alert(t.errorAddingTransaction || 'Error adding transaction');
     } finally {
       setLoading(false);
     }
@@ -4468,7 +4468,7 @@ function AddTransactionModal({ t, isDark, businessId, onClose, onAdd }: any) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className={cn('w-full max-w-md rounded-3xl p-6 shadow-2xl', isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white')}>
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold">{t.addTransaction || 'Добавить транзакцию'}</h3>
+          <h3 className="text-lg font-bold">{t.addTransaction || 'Add Transaction'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-500/10 rounded-full"><X className="w-5 h-5" /></button>
         </div>
 
@@ -4486,14 +4486,14 @@ function AddTransactionModal({ t, isDark, businessId, onClose, onAdd }: any) {
                     : isDark ? 'bg-slate-700' : 'bg-slate-100'
                 )}
               >
-                {type === 'income' ? `↑ ${t.income || 'Доход'}` : `↓ ${t.expense || 'Расход'}`}
+                {type === 'income' ? `↑ ${t.income || 'Income'}` : `↓ ${t.expense || 'Expense'}`}
               </button>
             ))}
           </div>
 
           {/* Amount */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">{t.amount || 'Сумма'} (₸)</label>
+            <label className="text-sm font-medium mb-1.5 block">{t.amount || 'Amount'} (₸)</label>
             <input
               type="number"
               value={form.amount}
@@ -4505,7 +4505,7 @@ function AddTransactionModal({ t, isDark, businessId, onClose, onAdd }: any) {
 
           {/* Category */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">{t.category || 'Категория'}</label>
+            <label className="text-sm font-medium mb-1.5 block">{t.category || 'Category'}</label>
             <select
               value={form.category}
               onChange={e => setForm({ ...form, category: e.target.value })}
@@ -4518,17 +4518,17 @@ function AddTransactionModal({ t, isDark, businessId, onClose, onAdd }: any) {
           {/* Description + Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">{t.description || 'Описание'}</label>
+              <label className="text-sm font-medium mb-1.5 block">{t.description || 'Description'}</label>
               <input
                 type="text"
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
-                placeholder={t.optional || 'необязательно'}
+                placeholder={t.optional || 'optional'}
                 className={cn('w-full p-3 rounded-xl border outline-none', isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200')}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">{t.date || 'Дата'}</label>
+              <label className="text-sm font-medium mb-1.5 block">{t.date || 'Date'}</label>
               <input
                 type="date"
                 value={form.date}
@@ -4540,7 +4540,7 @@ function AddTransactionModal({ t, isDark, businessId, onClose, onAdd }: any) {
         </div>
 
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className={cn('flex-1 py-3 rounded-xl font-medium', isDark ? 'bg-slate-700' : 'bg-slate-100')}>{t.cancel || 'Отмена'}</button>
+          <button onClick={onClose} className={cn('flex-1 py-3 rounded-xl font-medium', isDark ? 'bg-slate-700' : 'bg-slate-100')}>{t.cancel || 'Cancel'}</button>
           <button
             onClick={handleSubmit}
             disabled={loading || !form.amount}
@@ -4549,7 +4549,7 @@ function AddTransactionModal({ t, isDark, businessId, onClose, onAdd }: any) {
               form.type === 'income' ? 'bg-gradient-to-r from-emerald-500 to-teal-600' : 'bg-gradient-to-r from-red-500 to-rose-600'
             )}
           >
-            {loading ? (t.saving || 'Сохранение...') : form.type === 'income' ? `+ ${t.addIncome || 'Добавить доход'}` : `- ${t.addExpense || 'Добавить расход'}`}
+            {loading ? (t.saving || 'Saving...') : form.type === 'income' ? `+ ${t.addIncome || 'Add Income'}` : `- ${t.addExpense || 'Add Expense'}`}
           </button>
         </div>
       </div>
