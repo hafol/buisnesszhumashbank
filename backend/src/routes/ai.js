@@ -242,14 +242,15 @@ router.post('/forecast', authMiddleware, async (req, res) => {
 // POST /api/ai/advisor — Financial health analysis
 router.post('/advisor', authMiddleware, async (req, res) => {
     try {
-        const { transactions, totalIncome, totalExpenses, businessCount } = req.body;
+        const { transactions, totalIncome, totalExpenses, businessCount, language } = req.body;
         const { analyzeFinancialHealth } = require('../services/gemini');
         const result = await analyzeFinancialHealth({
             transactions: transactions || [],
             totalIncome: totalIncome || 0,
             totalExpenses: totalExpenses || 0,
             businessCount: businessCount || 0,
-            currentDate: new Date().toISOString().split('T')[0]
+            currentDate: new Date().toISOString().split('T')[0],
+            language: language || 'ru'
         });
         res.json(result);
     } catch (err) {

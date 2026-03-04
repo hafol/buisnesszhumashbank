@@ -299,7 +299,7 @@ async function forecastTaxes({ income, taxRegime, businessType, nextQuarter, cur
 /**
  * Analyzes overall financial health across all businesses
  */
-async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses, businessCount, currentDate }) {
+async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses, businessCount, currentDate, language = 'ru' }) {
   const categoryMap = {};
   transactions.forEach(tx => {
     if (tx.type === 'expense') {
@@ -312,35 +312,49 @@ async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses
     .map(([cat, amt]) => ({ category: cat, amount: amt }));
 
   const profit = totalIncome - totalExpenses;
+  const margin = totalIncome > 0 ? Math.round((profit / totalIncome) * 100) : 0;
 
-  const prompt = `Ты — персональный финансовый советник. Проанализируй финансовое состояние бизнеса на ${currentDate}.
+  const langMap = {
+    'kz': 'Kazakh (Қазақ тілі)',
+    'ru': 'Russian (Русский)',
+    'en': 'English'
+  };
+  const targetLang = langMap[language] || langMap['ru'];
 
-Данные:
-- Бизнесов: ${businessCount}
-- Общий доход: ${totalIncome} тенге
-- Общие расходы: ${totalExpenses} тенге
-- Чистая прибыль: ${profit} тенге
-- Маржа: ${totalIncome > 0 ? Math.round((profit / totalIncome) * 100) : 0}%
-- Топ расходных категорий: ${JSON.stringify(topCategories)}
-- Всего транзакций: ${transactions.length}
+  const prompt = `You are a professional financial advisor. Analyze the business financial health for ${currentDate}.
 
-Оцени финансовое здоровье бизнеса по 100-балльной шкале и дай рекомендации.
+DATA:
+- Businesses: ${businessCount}
+- Total Income: ${totalIncome} KZT
+- Total Expenses: ${totalExpenses} KZT
+- Net Profit: ${profit} KZT
+- Margin: ${margin}%
+- Top Expense Categories: ${JSON.stringify(topCategories)}
+- Total Transactions: ${transactions.length}
 
-Ответ СТРОГО в JSON:
+IMPORTANT: RESPOND ENTIRELY IN ${targetLang.toUpperCase()}. 
+All text fields in the JSON must be in ${targetLang}.
+
+TASK:
+1. Score financial health from 0-100.
+2. BE DETERMINISTIC. If the numbers don't change, the score must be exactly the same.
+3. Provide specific recommendations in ${targetLang}.
+
+STRICT JSON FORMAT:
 {
-  "healthScore": число_от_0_до_100,
-  "healthLabel": "Отлично|Хорошо|Нормально|Плохо|Критично",
+  "healthScore": number,
+  "healthLabel": "label in ${targetLang}",
   "healthColor": "emerald|blue|amber|orange|red",
-  "summary": "2-3 предложения об общем финансовом состоянии",
+  "summary": "2-3 sentences in ${targetLang}",
   "insights": [
-    {"icon": "эмодзи", "title": "заголовок", "text": "подробное описание", "type": "positive|neutral|warning|danger"}
+    {"icon": "emoji", "title": "title in ${targetLang}", "text": "description in ${targetLang}", "type": "positive|neutral|warning|danger"}
   ],
   "topExpenses": ${JSON.stringify(topCategories)},
-  "recommendations": ["конкретная рекомендация 1", "конкретная рекомендация 2", "конкретная рекомендация 3"],
-  "monthlyTarget": число_рекомендуемого_дохода_в_месяц
+  "recommendations": ["rec 1 in ${targetLang}", "rec 2", "rec 3"],
+  "monthlyTarget": number
 }
 
-Отвечай ТОЛЬКО JSON. Определи язык контекста и отвечай на нём (русский по умолчанию).`;
+Output ONLY valid JSON. All string values MUST be in ${targetLang}.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();

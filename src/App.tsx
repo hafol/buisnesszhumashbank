@@ -791,132 +791,70 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           />
         )}
 
-        {/* Module Content */}
-        <div className="p-6 relative z-10 w-full">
+        <main className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
           {activeModule === 'dashboard' && (
             <DashboardModule
-              t={t}
-              isDark={isDark}
-              formatCurrency={formatCurrency}
-              totalBalance={totalBalance}
-              displayCurrency={displayCurrency}
-              bankAccounts={bankAccounts}
-              projects={projects}
-              documents={documents}
-              theme={theme}
-              setTheme={setTheme}
+              t={t} isDark={isDark} formatCurrency={formatCurrency}
+              totalBalance={totalBalance} displayCurrency={displayCurrency}
+              bankAccounts={bankAccounts} projects={projects} documents={documents}
+              theme={theme} setTheme={setTheme}
               setActiveModule={setActiveModule}
               onFillDemo={handleFillDemoData}
               creatingDemo={creatingDemo}
               transactions={allTransactions}
             />
           )}
-          {activeModule === 'businesses' && (
-            <BusinessesModule
-              t={t}
-              isDark={isDark}
-              businesses={businesses}
-              setBusinesses={setBusinesses}
-              formatCurrency={formatCurrency}
-            />
-          )}
           {activeModule === 'projects' && (
-            <ProjectsModule
-              t={t}
-              isDark={isDark}
-              projects={projects}
-              setProjects={setProjects}
-              formatCurrency={formatCurrency}
-            />
+            <ProjectsModule t={t} isDark={isDark} projects={projects} setProjects={setProjects} formatCurrency={formatCurrency} />
           )}
           {activeModule === 'cashRegister' && (
-            <CashRegisterModule
-              t={t}
-              isDark={isDark}
-              user={user}
-              formatCurrency={formatCurrency}
-              receipts={receipts}
-              setReceipts={setReceipts}
-            />
+            <CashRegisterModule t={t} isDark={isDark} user={user} formatCurrency={formatCurrency} receipts={receipts} setReceipts={setReceipts} />
           )}
           {activeModule === 'taxAccountant' && (
-            <TaxAccountantModule
-              t={t}
-              isDark={isDark}
-              formatCurrency={formatCurrency}
-              payrollTransactions={payrollTransactions}
-              user={user}
-            />
+            <TaxAccountantModule t={t} isDark={isDark} formatCurrency={formatCurrency} payrollTransactions={payrollTransactions} user={user} />
           )}
           {activeModule === 'bankStatements' && (
-            <BankStatementsModule
-              t={t}
-              isDark={isDark}
-              formatCurrency={formatCurrency}
-              payrollTransactions={payrollTransactions}
-              setPayrollTransactions={setPayrollTransactions}
-            />
+            <BankStatementsModule t={t} isDark={isDark} formatCurrency={formatCurrency} payrollTransactions={payrollTransactions} setPayrollTransactions={setPayrollTransactions} />
           )}
           {activeModule === 'documents' && (
-            <DocumentsModule
-              t={t}
-              isDark={isDark}
-              documents={documents}
-              setDocuments={setDocuments}
-            />
-          )}
-          {activeModule === 'docGen' && (
-            <DocumentGeneratorModule
-              t={t}
-              isDark={isDark}
-            />
+            <DocumentsModule t={t} isDark={isDark} documents={documents} setDocuments={setDocuments} />
           )}
           {activeModule === 'banks' && (
             <MultiBankModule
-              t={t}
-              isDark={isDark}
-              bankAccounts={bankAccounts}
-              setBankAccounts={setBankAccounts}
+              t={t} isDark={isDark}
+              bankAccounts={bankAccounts} setBankAccounts={setBankAccounts}
               formatCurrency={formatCurrency}
               displayCurrency={displayCurrency}
               convertToDisplayCurrency={convertToDisplayCurrency}
-              setShowAddBank={setShowAddBank}
             />
           )}
-          {activeModule === 'exchange' && (
-            <ExchangeModule t={t} isDark={isDark} exchangeRates={exchangeRates} language={language} />
+          {activeModule === 'exchange' && <ExchangeModule t={t} isDark={isDark} exchangeRates={exchangeRates} language={language} />}
+          {activeModule === 'businesses' && (
+            <BusinessesModule t={t} isDark={isDark} businesses={businesses} setBusinesses={setBusinesses} formatCurrency={formatCurrency} />
           )}
-          {activeModule === 'transactions' && (
-            <TransactionHistoryModule
+          {activeModule === 'transactionHistory' && (
+            <TransactionHistoryModule t={t} isDark={isDark} transactions={allTransactions} formatCurrency={formatCurrency} />
+          )}
+          {activeModule === 'financialAdvisor' && (
+            <FinancialAdvisorModule t={t} isDark={isDark} transactions={allTransactions} businesses={businesses} formatCurrency={formatCurrency} language={language} />
+          )}
+          {activeModule === 'docGenerator' && (
+            <DocumentGeneratorModule t={t} isDark={isDark} />
+          )}
+        </main>
+
+        {/* Add Bank Modal */}
+        {
+          showAddBank && (
+            <AddBankModal
               t={t}
               isDark={isDark}
-              transactions={allTransactions}
-              formatCurrency={formatCurrency}
+              onClose={() => setShowAddBank(false)}
+              onAdd={handleAddBank}
             />
-          )}
-          {activeModule === 'advisor' && (
-            <FinancialAdvisorModule
-              t={t}
-              isDark={isDark}
-              transactions={allTransactions}
-              businesses={businesses}
-              formatCurrency={formatCurrency}
-            />
-          )}
-        </div>
-
-      </main>
-
-      {/* Add Bank Modal */}
-      {showAddBank && (
-        <AddBankModal
-          t={t}
-          isDark={isDark}
-          onClose={() => setShowAddBank(false)}
-          onAdd={handleAddBank}
-        />
-      )}
-    </div>
+          )
+        }
+    </div >
   );
 }
 
@@ -4788,7 +4726,7 @@ function TransactionHistoryModule({ t, isDark, transactions, formatCurrency }: a
 // ============================================================
 // FINANCIAL ADVISOR MODULE
 // ============================================================
-function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCurrency }: any) {
+function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCurrency, language }: any) {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -4805,7 +4743,8 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
         transactions: (transactions || []).slice(0, 50),
         totalIncome,
         totalExpenses,
-        businessCount: (businesses || []).length
+        businessCount: (businesses || []).length,
+        language
       });
       setAnalysis(result);
     } catch (err: any) {
