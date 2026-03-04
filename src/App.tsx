@@ -791,7 +791,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           />
         )}
 
-        <main className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
+        <div className="p-4 lg:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
           {activeModule === 'dashboard' && (
             <DashboardModule
               t={t} isDark={isDark} formatCurrency={formatCurrency}
@@ -841,19 +841,20 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           {activeModule === 'docGenerator' && (
             <DocumentGeneratorModule t={t} isDark={isDark} />
           )}
-        </main>
+        </div>
+      </main>
 
-        {/* Add Bank Modal */}
-        {
-          showAddBank && (
-            <AddBankModal
-              t={t}
-              isDark={isDark}
-              onClose={() => setShowAddBank(false)}
-              onAdd={handleAddBank}
-            />
-          )
-        }
+      {/* Add Bank Modal */}
+      {
+        showAddBank && (
+          <AddBankModal
+            t={t}
+            isDark={isDark}
+            onClose={() => setShowAddBank(false)}
+            onAdd={handleAddBank}
+          />
+        )
+      }
     </div >
   );
 }
@@ -4755,7 +4756,7 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
 
   useEffect(() => {
     if (transactions?.length > 0) doAnalysis();
-  }, [transactions?.length]);
+  }, [transactions?.length, language]);
 
   const scoreColor = !analysis ? 'slate' : analysis.healthScore >= 75 ? 'emerald' : analysis.healthScore >= 50 ? 'blue' : analysis.healthScore >= 30 ? 'amber' : 'red';
 

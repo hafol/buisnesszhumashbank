@@ -321,7 +321,10 @@ async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses
   };
   const targetLang = langMap[language] || langMap['ru'];
 
-  const prompt = `You are a professional financial advisor. Analyze the business financial health for ${currentDate}.
+  const prompt = `[SYSTEM INSTRUCTION: RESPOND ENTIRELY IN ${targetLang.toUpperCase()}. DO NOT USE RUSSIAN.]
+[ПАЙДАЛАНУШЫ НҰСҚАУЛЫҒЫ: ТЕК ${targetLang.toUpperCase()} ТІЛІНДЕ ЖАУАП БЕРІҢІЗ.]
+
+You are a professional financial advisor. Analyze the business financial health for ${currentDate}.
 
 DATA:
 - Businesses: ${businessCount}
@@ -332,12 +335,13 @@ DATA:
 - Top Expense Categories: ${JSON.stringify(topCategories)}
 - Total Transactions: ${transactions.length}
 
-IMPORTANT: RESPOND ENTIRELY IN ${targetLang.toUpperCase()}. 
-All text fields in the JSON must be in ${targetLang}.
+IMPORTANT: ALL TEXT FIELDS IN THE JSON MUST BE IN ${targetLang.toUpperCase()}. 
+Even if the transaction data is in Russian, YOU MUST TRANSLATE EVERYTHING to ${targetLang}. 
+NO RUSSIAN WORDS ALLOWED in "healthLabel", "summary", "insights", or "recommendations".
 
 TASK:
 1. Score financial health from 0-100.
-2. BE DETERMINISTIC. If the numbers don't change, the score must be exactly the same.
+2. BE DETERMINISTIC. If numbers don't change, healthScore must stay the same.
 3. Provide specific recommendations in ${targetLang}.
 
 STRICT JSON FORMAT:
@@ -354,7 +358,7 @@ STRICT JSON FORMAT:
   "monthlyTarget": number
 }
 
-Output ONLY valid JSON. All string values MUST be in ${targetLang}.`;
+Output ONLY valid JSON.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
