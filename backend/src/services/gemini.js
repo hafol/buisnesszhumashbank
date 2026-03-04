@@ -3,6 +3,20 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
+async function safeGenerateContent(prompt) {
+  try {
+    return await model.generateContent(prompt);
+  } catch (err) {
+    const msg = err.message || '';
+    if (msg.includes('429 Too Many Requests') || msg.includes('quota')) {
+      throw new Error('ИИ-советник временно перегружен из-за превышения квоты API (Too Many Requests). Пожалуйста, подождите 1-2 минуты и повторите попытку.');
+    } else if (msg.includes('503 Service Unavailable') || msg.includes('overloaded')) {
+      throw new Error('Сервисы ИИ в данный момент недоступны или перегружены. Повторите попытку позже.');
+    }
+    throw err;
+  }
+}
+
 /**
  * Robustly extracts JSON from a string that might contain Markdown code blocks or other text.
  */
@@ -47,7 +61,7 @@ ${contractText}
 
 Отвечай ТОЛЬКО JSON.`;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   const text = result.response.text().trim();
   return JSON.parse(extractJson(text));
 }
@@ -106,7 +120,7 @@ async function calculateTaxes({ userType, businessType, taxRegime, income, perio
 
 Отвечай ТОЛЬКО JSON.`;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   const text = result.response.text().trim();
   return JSON.parse(extractJson(text));
 }
@@ -132,7 +146,7 @@ async function chatWithTaxExpert(userMessage, context) {
 Коротко и по делу. Кодировка UTF-8.
 `;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   return result.response.text().trim();
 }
 
@@ -169,7 +183,7 @@ ${statementText}
 
 Отвечай ТОЛЬКО JSON.`;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   const text = result.response.text().trim();
   const parsed = JSON.parse(extractJson(text));
   return parsed.transactions || [];
@@ -197,7 +211,7 @@ ${documentText}
 
 Отвечай ТОЛЬКО JSON.`;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   const text = result.response.text().trim();
   return JSON.parse(extractJson(text));
 }
@@ -249,7 +263,7 @@ INSTRUCTIONS:
 7. Keep it motivational yet realistic.
 8. Do not exceed 300 words.`;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   return result.response.text().trim();
 }
 
@@ -289,7 +303,7 @@ async function forecastTaxes({ income, taxRegime, businessType, nextQuarter, cur
 
 Отвечай ТОЛЬКО JSON.`;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   const text = result.response.text().trim();
   return JSON.parse(extractJson(text));
 }
@@ -357,7 +371,7 @@ STRICT JSON FORMAT:
 
 Output ONLY valid JSON.`;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   const text = result.response.text().trim();
   return JSON.parse(extractJson(text));
 }
@@ -387,7 +401,7 @@ async function generateDocumentContent(promptText) {
 
 Верни ТОЛЬКО JSON объект. Без лишних слов и markdown-разметки.`;
 
-  const result = await model.generateContent(prompt);
+  const result = await safeGenerateContent(prompt);
   const text = result.response.text().trim();
   return JSON.parse(extractJson(text));
 }
