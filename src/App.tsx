@@ -435,14 +435,14 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
   const modules = [
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
     { id: 'businesses', icon: Building, label: t.businesses || 'Мои Бизнесы' },
-    { id: 'transactions', icon: ArrowUpRight, label: t.transactionHistory || 'История' },
-    { id: 'advisor', icon: Star, label: t.financialAdvisor || 'ИИ Советник' },
+    { id: 'transactionHistory', icon: ArrowUpRight, label: t.transactionHistory || 'История' },
+    { id: 'financialAdvisor', icon: Star, label: t.financialAdvisor || 'ИИ Советник' },
     { id: 'projects', icon: FolderKanban, label: t.projects },
     { id: 'cashRegister', icon: Receipt, label: t.cashRegister },
     { id: 'taxAccountant', icon: Calculator, label: t.taxAccountant, isPremium: true },
     { id: 'bankStatements', icon: FileText, label: t.bankStatements, isPremium: true },
     { id: 'documents', icon: FileSearch, label: t.documents, isPremium: true },
-    { id: 'docGen', icon: Printer, label: t.docGenerator || 'Generator', isPremium: true },
+    { id: 'docGenerator', icon: Printer, label: t.docGenerator || 'Генератор', isPremium: true },
     { id: 'banks', icon: Building2, label: t.banks },
     { id: 'exchange', icon: ArrowLeftRight, label: t.exchange },
   ];
