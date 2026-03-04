@@ -4738,7 +4738,7 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
   const totalExpenses = (transactions || []).filter((tx: any) => tx.type === 'expense').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
 
   const doAnalysis = async () => {
-    if (transactions.length === 0) return;
+    if (!transactions || transactions.length === 0) return;
     setLoading(true);
     setError('');
     try {
@@ -4751,7 +4751,7 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
       });
       setAnalysis(result);
     } catch (err: any) {
-      setError(err.message || 'Error');
+      setError(err.message || 'Ошибка ИИ советника');
     }
     setLoading(false);
   };
@@ -4769,7 +4769,7 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
           <h1 className="text-3xl font-bold">{t.financialAdvisor}</h1>
           <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.financialAdvisorSub}</p>
         </div>
-        {transactions?.length > 0 && (
+        {(transactions?.length > 0) && (
           <button
             onClick={doAnalysis}
             disabled={loading}
@@ -4781,10 +4781,10 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
         )}
       </div>
 
-      {transactions?.length === 0 ? (
+      {!(transactions?.length > 0) ? (
         <div className={cn('p-16 rounded-2xl border-2 border-dashed text-center', isDark ? 'border-slate-700' : 'border-slate-200')}>
           <Bot className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.advisorNoData}</p>
+          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>{t.advisorNoData || 'Добавьте транзакции в разделе "Мои Бизнесы", чтобы ИИ-советник мог проанализировать ваш бизнес.'}</p>
         </div>
       ) : loading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-8">
@@ -4794,6 +4794,9 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
       ) : error ? (
         <div className={cn('p-6 rounded-2xl border text-center', isDark ? 'bg-red-900/20 border-red-800' : 'bg-red-50 border-red-200')}>
           <p className="text-red-500">{error}</p>
+          <button onClick={doAnalysis} className="mt-4 px-4 py-2 bg-emerald-500 text-white rounded-xl text-sm hover:bg-emerald-600 transition-colors">
+            Повторить попытку
+          </button>
         </div>
       ) : analysis ? (
         <>
