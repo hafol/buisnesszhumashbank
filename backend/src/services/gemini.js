@@ -208,7 +208,7 @@ ${documentText}
 /**
  * Business advisor AI with memory and financial context
  */
-async function chatWithBusinessAdvisor({ businessName, businessType, businessDescription, transactions, chatHistory, userMessage }) {
+async function chatWithBusinessAdvisor({ businessName, businessType, businessDescription, transactions, chatHistory, userMessage, language = 'ru' }) {
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
   const profit = totalIncome - totalExpense;
@@ -221,34 +221,36 @@ async function chatWithBusinessAdvisor({ businessName, businessType, businessDes
     `${t.date}: ${t.type === 'income' ? '+' : '-'}₸${Number(t.amount).toLocaleString()} (${t.category}) — ${t.description}`
   ).join('\n') || 'Транзакций нет';
 
-  const prompt = `Ты — персональный бизнес-советник и стратег по развитию бизнеса в Казахстане.
+  const langName = language === 'kz' ? 'Kazakh' : language === 'en' ? 'English' : 'Russian';
 
-ДАННЫЕ О БИЗНЕСЕ:
-- Название: ${businessName}
-- Тип: ${businessType}
-- Описание: ${businessDescription || 'Не указано'}
-- Общий доход: ₸${totalIncome.toLocaleString()}
-- Общие расходы: ₸${totalExpense.toLocaleString()}
-- Чистая прибыль: ₸${profit.toLocaleString()}
+  const prompt = `You are a personal business advisor and strategic growth expert in Kazakhstan.
+Your goal is to provide specific, data-driven advice based on the business context and transactions provided.
 
-ПОСЛЕДНИЕ ТРАНЗАКЦИИ:
+BUSINESS DATA:
+- Name: ${businessName}
+- Type: ${businessType}
+- Description: ${businessDescription || 'Not specified'}
+- Total Income: ₸${totalIncome.toLocaleString()}
+- Total Expense: ₸${totalExpense.toLocaleString()}
+- Net Profit: ₸${profit.toLocaleString()}
+
+RECENT TRANSACTIONS:
 ${recentTx}
 
-ИСТОРИЯ РАЗГОВОРА:
+CONVERSATION HISTORY:
 ${historyText}
 
-ТЕКУЩИЙ ВОПРОС КЛИЕНТА: "${userMessage}"
+CURRENT USER MESSAGE: "${userMessage}"
 
-ИНСТРУКЦИИ:
-1. Определи язык вопроса (русский, казахский, английский) и отвечай НА ТОМ ЖЕ ЯЗЫКЕ.
-2. Учитывай всю историю разговора — не повторяй уже сказанное.
-3. Используй реальные финансовые данные бизнеса в своих советах.
-4. Давай конкретные, практичные рекомендации по росту и масштабированию.
-5. Если спрашивают о прибыльности — анализируй соотношение доходов и расходов.
-6. Если нет транзакций — сначала попроси рассказать больше о бизнесе.
-7. Будь дружелюбным и мотивирующим, но реалистичным.
-8. Ответ должен быть структурированным (используй эмодзи для разделов).
-9. Не превышай 300 слов в ответе.`;
+INSTRUCTIONS:
+1. MANDATORY: Respond ONLY in ${langName}. 
+2. If the chosen language is Kazakh (kz), DO NOT use Russian words.
+3. Use the provided financial data to give concrete, practical scaling and growth advice.
+4. Be structured, professional, and use emojis for readability.
+5. If there are no transactions, ask the user to provide more details about their current operations first.
+6. Acknowledge the context from the conversation history if relevant.
+7. Keep it motivational yet realistic.
+8. Do not exceed 300 words.`;
 
   const result = await model.generateContent(prompt);
   return result.response.text().trim();
@@ -258,41 +260,41 @@ ${historyText}
  * Forecasts taxes for the next quarter based on current income
  */
 async function forecastTaxes({ income, taxRegime, businessType, nextQuarter, currentDate }) {
-  const prompt = `Ты — старший налоговый консультант РК. На основе текущих данных составь прогноз налоговой нагрузки на ${nextQuarter}.
+  const prompt = `Ты — старший налоговый консультант РК.На основе текущих данных составь прогноз налоговой нагрузки на ${nextQuarter}.
 
 Входные данные:
-- Текущий доход: ${income} тенге
-- Налоговый режим: ${taxRegime}
-- Тип бизнеса: ${businessType}
-- Дата: ${currentDate}
+  - Текущий доход: ${income} тенге
+    - Налоговый режим: ${taxRegime}
+  - Тип бизнеса: ${businessType}
+  - Дата: ${currentDate}
 
 Допущения для прогноза:
-- Рост дохода на 10-15% (оптимистичный) и 5% (консервативный)
-- Учти сезонные факторы
+  - Рост дохода на 10 - 15 % (оптимистичный) и 5 % (консервативный)
+    - Учти сезонные факторы
 
 Ответ СТРОГО в JSON:
-{
-  "nextQuarter": "${nextQuarter}",
-  "currentIncome": ${income},
-  "conservativeIncome": число,
-  "optimisticIncome": число,
-  "conservativeTax": число,
-  "optimisticTax": число,
-  "taxBreakdown": [
-    {"name": "название налога", "conservative": число, "optimistic": число, "description": "объяснение"}
-  ],
-  "totalConservative": число,
-  "totalOptimistic": число,
-  "recommendations": ["рекомендация 1", "рекомендация 2", "рекомендация 3"],
-  "warnings": ["предупреждение если есть"],
-  "tip": "главный совет на этот квартал"
-}
+  {
+    "nextQuarter": "${nextQuarter}",
+      "currentIncome": ${income},
+    "conservativeIncome": число,
+      "optimisticIncome": число,
+        "conservativeTax": число,
+          "optimisticTax": число,
+            "taxBreakdown": [
+              { "name": "название налога", "conservative": число, "optimistic": число, "description": "объяснение" }
+            ],
+              "totalConservative": число,
+                "totalOptimistic": число,
+                  "recommendations": ["рекомендация 1", "рекомендация 2", "рекомендация 3"],
+                    "warnings": ["предупреждение если есть"],
+                      "tip": "главный совет на этот квартал"
+  }
 
 Отвечай ТОЛЬКО JSON.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  const cleaned = text.replace(/^```json\n ? /, '').replace(/\n ? ```$/, '').trim();
   return JSON.parse(cleaned);
 }
 
@@ -322,47 +324,47 @@ async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses
   const targetLang = langMap[language] || langMap['ru'];
 
   const prompt = `[SYSTEM INSTRUCTION: RESPOND ENTIRELY IN ${targetLang.toUpperCase()}. DO NOT USE RUSSIAN.]
-[ПАЙДАЛАНУШЫ НҰСҚАУЛЫҒЫ: ТЕК ${targetLang.toUpperCase()} ТІЛІНДЕ ЖАУАП БЕРІҢІЗ.]
+  [ПАЙДАЛАНУШЫ НҰСҚАУЛЫҒЫ: ТЕК ${targetLang.toUpperCase()} ТІЛІНДЕ ЖАУАП БЕРІҢІЗ.]
 
-You are a professional financial advisor. Analyze the business financial health for ${currentDate}.
+You are a professional financial advisor.Analyze the business financial health for ${currentDate}.
 
-DATA:
-- Businesses: ${businessCount}
-- Total Income: ${totalIncome} KZT
-- Total Expenses: ${totalExpenses} KZT
-- Net Profit: ${profit} KZT
-- Margin: ${margin}%
-- Top Expense Categories: ${JSON.stringify(topCategories)}
-- Total Transactions: ${transactions.length}
+    DATA:
+    - Businesses: ${businessCount}
+  - Total Income: ${totalIncome} KZT
+    - Total Expenses: ${totalExpenses} KZT
+      - Net Profit: ${profit} KZT
+        - Margin: ${margin}%
+          - Top Expense Categories: ${JSON.stringify(topCategories)}
+  - Total Transactions: ${transactions.length}
 
-IMPORTANT: ALL TEXT FIELDS IN THE JSON MUST BE IN ${targetLang.toUpperCase()}. 
+  IMPORTANT: ALL TEXT FIELDS IN THE JSON MUST BE IN ${targetLang.toUpperCase()}. 
 Even if the transaction data is in Russian, YOU MUST TRANSLATE EVERYTHING to ${targetLang}. 
 NO RUSSIAN WORDS ALLOWED in "healthLabel", "summary", "insights", or "recommendations".
 
-TASK:
-1. Score financial health from 0-100.
-2. BE DETERMINISTIC. If numbers don't change, healthScore must stay the same.
-3. Provide specific recommendations in ${targetLang}.
+    TASK:
+  1. Score financial health from 0 - 100.
+  2. BE DETERMINISTIC.If numbers don't change, healthScore must stay the same.
+  3. Provide specific recommendations in ${targetLang}.
 
 STRICT JSON FORMAT:
-{
-  "healthScore": number,
-  "healthLabel": "label in ${targetLang}",
-  "healthColor": "emerald|blue|amber|orange|red",
-  "summary": "2-3 sentences in ${targetLang}",
-  "insights": [
-    {"icon": "emoji", "title": "title in ${targetLang}", "text": "description in ${targetLang}", "type": "positive|neutral|warning|danger"}
-  ],
-  "topExpenses": ${JSON.stringify(topCategories)},
-  "recommendations": ["rec 1 in ${targetLang}", "rec 2", "rec 3"],
-  "monthlyTarget": number
-}
+  {
+    "healthScore": number,
+      "healthLabel": "label in ${targetLang}",
+        "healthColor": "emerald|blue|amber|orange|red",
+          "summary": "2-3 sentences in ${targetLang}",
+            "insights": [
+              { "icon": "emoji", "title": "title in ${targetLang}", "text": "description in ${targetLang}", "type": "positive|neutral|warning|danger" }
+            ],
+              "topExpenses": ${JSON.stringify(topCategories)},
+    "recommendations": ["rec 1 in ${targetLang}", "rec 2", "rec 3"],
+      "monthlyTarget": number
+  }
 
 Output ONLY valid JSON.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  const cleaned = text.replace(/^```json\n ? /, '').replace(/\n ? ```$/, '').trim();
   return JSON.parse(cleaned);
 }
 
@@ -376,26 +378,26 @@ async function generateDocumentContent(promptText) {
 Твоя задача: создать структуру документа для библиотеки jsPDF на основе описания пользователя.
 
 ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ К СТРУКТУРЕ:
-1. Использовать шрифт 'TimesNewRoman' (уже настроен в системе).
+  1. Использовать шрифт 'TimesNewRoman'(уже настроен в системе).
 2. fontSize для основного текста: 11.
-3. Должен быть заголовок (bold: true, alignment: 'center').
-4. Профессиональный отступ (margins).
+  3. Должен быть заголовок(bold: true, alignment: 'center').
+4. Профессиональный отступ(margins).
 5. Если в описании есть суммы, сроки или условия — оформи их в таблицу или маркированный список.
-6. Язык документа должен соответствовать языку запроса пользователя (русский, казахский или английский).
+6. Язык документа должен соответствовать языку запроса пользователя(русский, казахский или английский).
 
-ТРЕБОВАНИЯ К ФОРМАТУ (JSON):
-- Ответ должен быть СТРОГО валидным JSON объектом.
-- Используй ключи: "content", которые могут содержать "text", "bold", "fontSize", "alignment", и "table" (с body: [[...]]).
+ТРЕБОВАНИЯ К ФОРМАТУ(JSON):
+  - Ответ должен быть СТРОГО валидным JSON объектом.
+- Используй ключи: "content", которые могут содержать "text", "bold", "fontSize", "alignment", и "table"(с body: [[...]]).
 - Мы используем библиотеку jsPDF для отрисовки, поэтому структура должна быть плоской и понятной.
 
 Описание документа:
-"${promptText}"
+  "${promptText}"
 
-Верни ТОЛЬКО JSON объект. Без лишних слов и markdown-разметки.`;
+Верни ТОЛЬКО JSON объект.Без лишних слов и markdown - разметки.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  const cleaned = text.replace(/^```json\n ? /, '').replace(/\n ? ```$/, '').trim();
   return JSON.parse(cleaned);
 }
 

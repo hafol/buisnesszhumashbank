@@ -830,7 +830,7 @@ function AppShell({ language, setLanguage }: { language: Language; setLanguage: 
           )}
           {activeModule === 'exchange' && <ExchangeModule t={t} isDark={isDark} exchangeRates={exchangeRates} language={language} />}
           {activeModule === 'businesses' && (
-            <BusinessesModule t={t} isDark={isDark} businesses={businesses} setBusinesses={setBusinesses} formatCurrency={formatCurrency} />
+            <BusinessesModule t={t} language={language} isDark={isDark} businesses={businesses} setBusinesses={setBusinesses} formatCurrency={formatCurrency} />
           )}
           {activeModule === 'transactionHistory' && (
             <TransactionHistoryModule t={t} isDark={isDark} transactions={allTransactions} formatCurrency={formatCurrency} />
@@ -3872,31 +3872,31 @@ function ExchangeModule({ t, isDark, exchangeRates, language }: any) {
 // BUSINESSES MODULE
 // ============================================================
 const BUSINESS_TYPES = [
-  { value: 'retail', label: 'Магазин / Розница', icon: '🛒' },
-  { value: 'cafe', label: 'Кафе / Ресторан', icon: '☕' },
-  { value: 'service', label: 'Услуги', icon: '🔧' },
-  { value: 'online', label: 'Онлайн-бизнес', icon: '💻' },
-  { value: 'production', label: 'Производство', icon: '🏭' },
-  { value: 'logistics', label: 'Логистика / Доставка', icon: '🚚' },
-  { value: 'education', label: 'Образование', icon: '📚' },
-  { value: 'beauty', label: 'Красота / Салон', icon: '💅' },
-  { value: 'other', label: 'Другое', icon: '🏢' },
+  { value: 'retail', labelKey: 'type_retail', icon: '🛒' },
+  { value: 'cafe', labelKey: 'type_cafe', icon: '☕' },
+  { value: 'service', labelKey: 'type_service', icon: '🔧' },
+  { value: 'online', labelKey: 'type_online', icon: '💻' },
+  { value: 'production', labelKey: 'type_production', icon: '🏭' },
+  { value: 'logistics', labelKey: 'type_logistics', icon: '🚚' },
+  { value: 'education', labelKey: 'type_education', icon: '📚' },
+  { value: 'beauty', labelKey: 'type_beauty', icon: '💅' },
+  { value: 'other', labelKey: 'type_other', icon: '🏢' },
 ];
 
 const TX_CATEGORIES = [
-  { value: 'sales', label: 'Продажи', type: 'income' },
-  { value: 'services', label: 'Услуги', type: 'income' },
-  { value: 'other_income', label: 'Другой доход', type: 'income' },
-  { value: 'rent', label: 'Аренда', type: 'expense' },
-  { value: 'salary', label: 'Зарплата', type: 'expense' },
-  { value: 'supplies', label: 'Закупка/Сырьё', type: 'expense' },
-  { value: 'marketing', label: 'Маркетинг', type: 'expense' },
-  { value: 'utilities', label: 'Коммунальные', type: 'expense' },
-  { value: 'taxes', label: 'Налоги', type: 'expense' },
-  { value: 'other_expense', label: 'Другой расход', type: 'expense' },
+  { value: 'sales', labelKey: 'cat_sales', type: 'income' },
+  { value: 'services', labelKey: 'cat_services', type: 'income' },
+  { value: 'other_income', labelKey: 'cat_other_income', type: 'income' },
+  { value: 'rent', labelKey: 'cat_rent', type: 'expense' },
+  { value: 'salary', labelKey: 'cat_salary', type: 'expense' },
+  { value: 'supplies', labelKey: 'cat_supplies', type: 'expense' },
+  { value: 'marketing', labelKey: 'cat_marketing', type: 'expense' },
+  { value: 'utilities', labelKey: 'cat_utilities', type: 'expense' },
+  { value: 'taxes', labelKey: 'cat_taxes', type: 'expense' },
+  { value: 'other_expense', labelKey: 'cat_other_expense', type: 'expense' },
 ];
 
-function BusinessesModule({ t, isDark, businesses, setBusinesses, formatCurrency }: any) {
+function BusinessesModule({ t, language, isDark, businesses, setBusinesses, formatCurrency }: any) {
   const [activeBusiness, setActiveBusiness] = useState<any>(null);
   const [showAddBusiness, setShowAddBusiness] = useState(false);
 
@@ -3915,6 +3915,8 @@ function BusinessesModule({ t, isDark, businesses, setBusinesses, formatCurrency
   if (activeBusiness) {
     return (
       <BusinessDetailView
+        t={t}
+        language={language}
         business={activeBusiness}
         isDark={isDark}
         formatCurrency={formatCurrency}
@@ -3976,7 +3978,7 @@ function BusinessesModule({ t, isDark, businesses, setBusinesses, formatCurrency
                 <div>
                   <h3 className="font-bold text-lg leading-tight">{biz.name}</h3>
                   <span className={cn('text-xs px-2 py-0.5 rounded-full', isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600')}>
-                    {bizType.label}
+                    {t[bizType.labelKey] || bizType.labelKey}
                   </span>
                 </div>
               </div>
@@ -3989,11 +3991,11 @@ function BusinessesModule({ t, isDark, businesses, setBusinesses, formatCurrency
 
               <div className="flex items-center justify-between pt-4 border-t border-slate-200/50 dark:border-slate-700/50">
                 <span className={cn('text-xs', isDark ? 'text-slate-500' : 'text-slate-400')}>
-                  Открыть →
+                  {t.view || 'Открыть'} →
                 </span>
                 <div className="flex items-center gap-1">
                   <Bot className="w-4 h-4 text-purple-500" />
-                  <span className="text-xs text-purple-500">ИИ-советник</span>
+                  <span className="text-xs text-purple-500">{t.financialAdvisor || 'ИИ-советник'}</span>
                 </div>
               </div>
             </div>
@@ -4021,6 +4023,7 @@ function BusinessesModule({ t, isDark, businesses, setBusinesses, formatCurrency
       {/* Add Business Modal */}
       {showAddBusiness && (
         <AddBusinessModal
+          t={t}
           isDark={isDark}
           onClose={() => setShowAddBusiness(false)}
           onAdd={(b: any) => { setBusinesses((prev: any[]) => [b, ...prev]); setActiveBusiness(b); }}
@@ -4031,7 +4034,7 @@ function BusinessesModule({ t, isDark, businesses, setBusinesses, formatCurrency
 }
 
 // ---- Add Business Modal ----
-function AddBusinessModal({ isDark, onClose, onAdd }: any) {
+function AddBusinessModal({ t, isDark, onClose, onAdd }: any) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: '', type: 'retail', description: '', color: '#10B981', icon: '' });
   const colors = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#64748B'];
@@ -4039,7 +4042,7 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
   const selectedType = BUSINESS_TYPES.find(t => t.value === form.type) || BUSINESS_TYPES[0];
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) return alert('Введите название');
+    if (!form.name.trim()) return alert(t.enterName || 'Введите название');
     setLoading(true);
     try {
       const newBiz = await businessesApi.create({
@@ -4049,7 +4052,7 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
       onAdd(newBiz);
       onClose();
     } catch {
-      alert('Ошибка при создании бизнеса');
+      alert(t.errorCreatingBusiness || 'Ошибка при создании бизнеса');
     } finally {
       setLoading(false);
     }
@@ -4059,26 +4062,26 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className={cn('w-full max-w-lg rounded-3xl p-6 shadow-2xl', isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white')}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold">Новый бизнес</h3>
+          <h3 className="text-xl font-bold">{t.newBusiness || 'Новый бизнес'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-500/10 rounded-full"><X className="w-5 h-5" /></button>
         </div>
 
         <div className="space-y-4">
           {/* Name */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Название бизнеса</label>
+            <label className="text-sm font-medium mb-1.5 block">{t.businessName || 'Название бизнеса'}</label>
             <input
               type="text"
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="Kaspi Магазин, Кафе «Уют»..."
+              placeholder={t.businessNamePlaceholder || "Kaspi Магазин, Кафе «Уют»..."}
               className={cn('w-full p-3 rounded-xl border outline-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200')}
             />
           </div>
 
           {/* Type */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Тип бизнеса</label>
+            <label className="text-sm font-medium mb-2 block">{t.businessTypeLabel || 'Тип бизнеса'}</label>
             <div className="grid grid-cols-3 gap-2">
               {BUSINESS_TYPES.map(bt => (
                 <button
@@ -4092,7 +4095,7 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
                   )}
                 >
                   <span>{bt.icon}</span>
-                  <span className="text-xs leading-tight">{bt.label}</span>
+                  <span className="text-xs leading-tight">{t[bt.labelKey] || bt.labelKey}</span>
                 </button>
               ))}
             </div>
@@ -4100,19 +4103,19 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
 
           {/* Description */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Описание (необязательно)</label>
+            <label className="text-sm font-medium mb-1.5 block">{t.descriptionOptional || 'Описание (необязательно)'}</label>
             <textarea
               rows={2}
               value={form.description}
               onChange={e => setForm({ ...form, description: e.target.value })}
-              placeholder="Чем занимается бизнес, цели, особенности..."
+              placeholder={t.businessDescriptionPlaceholder || "Чем занимается бизнес, цели, особенности..."}
               className={cn('w-full p-3 rounded-xl border outline-none resize-none focus:ring-2 focus:ring-emerald-500', isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200')}
             />
           </div>
 
           {/* Color */}
           <div>
-            <label className="text-sm font-medium mb-2 block">Цвет</label>
+            <label className="text-sm font-medium mb-2 block">{t.selectColor || 'Цвет'}</label>
             <div className="flex gap-2">
               {colors.map(c => (
                 <button
@@ -4128,14 +4131,14 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
 
         <div className="flex gap-3 mt-6">
           <button onClick={onClose} className={cn('flex-1 py-3 rounded-xl font-medium', isDark ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200')}>
-            Отмена
+            {t.cancel || 'Отмена'}
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading || !form.name.trim()}
             className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold disabled:opacity-50 hover:shadow-lg transition-all"
           >
-            {loading ? 'Создание...' : 'Создать бизнес'}
+            {loading ? (t.creating || 'Создание...') : (t.createBusiness || 'Создать бизнес')}
           </button>
         </div>
       </div>
@@ -4145,7 +4148,7 @@ function AddBusinessModal({ isDark, onClose, onAdd }: any) {
 
 // ---- Business Detail View ----
 
-function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
+function BusinessDetailView({ t, language, business, isDark, formatCurrency, onBack }: any) {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [loadingTx, setLoadingTx] = useState(true);
@@ -4194,17 +4197,17 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
     setChatHistory(prev => [...prev, userMsg]);
     setChatSending(true);
     try {
-      const { response } = await businessAiApi.sendMessage(business.id, msg);
+      const { response } = await businessAiApi.sendMessage(business.id, msg, language);
       setChatHistory(prev => [...prev, { role: 'assistant', message: response, created_at: new Date().toISOString() }]);
     } catch {
-      setChatHistory(prev => [...prev, { role: 'assistant', message: 'Ошибка связи. Попробуйте ещё раз.', created_at: new Date().toISOString() }]);
+      setChatHistory(prev => [...prev, { role: 'assistant', message: t.aiConnectionError || 'Ошибка связи. Попробуйте ещё раз.', created_at: new Date().toISOString() }]);
     } finally {
       setChatSending(false);
     }
   };
 
   const handleDeleteTx = async (txId: string) => {
-    if (!confirm('Удалить транзакцию?')) return;
+    if (!confirm(t.confirmDeleteTransaction || 'Удалить транзакцию?')) return;
     await businessTxApi.delete(business.id, txId);
     setTransactions(prev => prev.filter(t => t.id !== txId));
   };
@@ -4217,7 +4220,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           onClick={onBack}
           className={cn('flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-colors', isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white hover:bg-slate-50 border border-slate-200')}
         >
-          ← Назад
+          ← {t.back || 'Назад'}
         </button>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow" style={{ backgroundColor: business.color || '#10B981' }}>
@@ -4225,7 +4228,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           </div>
           <div>
             <h2 className="text-xl font-bold">{business.name}</h2>
-            <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{bizType.label}</p>
+            <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-slate-500')}>{t[bizType.labelKey] || bizType.labelKey}</p>
           </div>
         </div>
       </div>
@@ -4233,9 +4236,9 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Доход', value: formatCurrency(totalIncome), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-          { label: 'Расход', value: formatCurrency(totalExpense), color: 'text-red-500', bg: 'bg-red-500/10' },
-          { label: 'Прибыль', value: formatCurrency(profit), color: profit >= 0 ? 'text-emerald-500' : 'text-red-500', bg: profit >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10' },
+          { label: t.income || 'Доход', value: formatCurrency(totalIncome), color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+          { label: t.expense || 'Расход', value: formatCurrency(totalExpense), color: 'text-red-500', bg: 'bg-red-500/10' },
+          { label: t.profit || 'Прибыль', value: formatCurrency(profit), color: profit >= 0 ? 'text-emerald-500' : 'text-red-500', bg: profit >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10' },
         ].map(s => (
           <div key={s.label} className={cn('p-4 rounded-2xl border text-center', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <p className={cn('text-xs font-medium mb-1', isDark ? 'text-slate-400' : 'text-slate-500')}>{s.label}</p>
@@ -4250,7 +4253,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           {/* Chart */}
           <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">График транзакций</h3>
+              <h3 className="font-bold">{t.transactionChart || 'График транзакций'}</h3>
               <div className={cn('flex rounded-xl p-1', isDark ? 'bg-slate-900' : 'bg-slate-100')}>
                 {(['week', 'month', 'year'] as const).map(p => (
                   <button
@@ -4260,7 +4263,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                       period === p ? 'bg-emerald-500 text-white shadow' : isDark ? 'text-slate-400' : 'text-slate-600'
                     )}
                   >
-                    {p === 'week' ? 'Неделя' : p === 'month' ? 'Месяц' : 'Год'}
+                    {p === 'week' ? (t.week || 'Неделя') : p === 'month' ? (t.month || 'Месяц') : (t.year || 'Год')}
                   </button>
                 ))}
               </div>
@@ -4277,14 +4280,14 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                     formatter={(v: any) => [`₸${Number(v).toLocaleString()} `, undefined]}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} dot={false} name="Доход" />
-                  <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} dot={false} name="Расход" />
+                  <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} dot={false} name={t.income || 'Доход'} />
+                  <Line type="monotone" dataKey="expense" stroke="#ef4444" strokeWidth={2} dot={false} name={t.expense || 'Расход'} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
               <div className={cn('flex flex-col items-center justify-center h-40 rounded-xl', isDark ? 'bg-slate-900/50' : 'bg-slate-50')}>
                 <TrendingUp className="w-8 h-8 text-slate-400 mb-2" />
-                <p className="text-sm text-slate-400">Добавьте транзакции, чтобы увидеть график</p>
+                <p className="text-sm text-slate-400">{t.addTransactionsToSeeChart || 'Добавьте транзакции, чтобы увидеть график'}</p>
               </div>
             )}
           </div>
@@ -4292,12 +4295,12 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
           {/* Transactions */}
           <div className={cn('p-5 rounded-2xl border', isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200')}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold">Транзакции</h3>
+              <h3 className="font-bold">{t.transactions || 'Транзакции'}</h3>
               <button
                 onClick={() => setShowAddTx(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg text-sm font-medium hover:shadow transition-all"
               >
-                <Plus className="w-4 h-4" /> Добавить
+                <Plus className="w-4 h-4" /> {t.add || 'Добавить'}
               </button>
             </div>
 
@@ -4307,7 +4310,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
               ) : transactions.length === 0 ? (
                 <div className="text-center py-8">
                   <Wallet className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400">Нет транзакций</p>
+                  <p className="text-sm text-slate-400">{t.noTransactions || 'Нет транзакций'}</p>
                 </div>
               ) : transactions.map((tx: any) => {
                 const cat = TX_CATEGORIES.find(c => c.value === tx.category);
@@ -4318,8 +4321,8 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                         {tx.type === 'income' ? '↑' : '↓'}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{tx.description || cat?.label || 'Транзакция'}</p>
-                        <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>{tx.date} • {cat?.label || tx.category}</p>
+                        <p className="text-sm font-medium">{tx.description || (cat ? t[cat.labelKey] : t.transaction) || 'Транзакция'}</p>
+                        <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>{tx.date} • {(cat ? t[cat.labelKey] : tx.category)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -4347,15 +4350,15 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
               <Bot className="w-5 h-5 text-purple-500" />
             </div>
             <div>
-              <h3 className="font-bold">ИИ-советник</h3>
-              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Персональный советник для {business.name}</p>
+              <h3 className="font-bold">{t.financialAdvisor || 'ИИ-советник'}</h3>
+              <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>{t.personalAdvisorFor || 'Персональный советник для'} {business.name}</p>
             </div>
             {chatHistory.length > 0 && (
               <button
-                onClick={async () => { if (confirm('Очистить историю?')) { await businessAiApi.clearHistory(business.id); setChatHistory([]); } }}
+                onClick={async () => { if (confirm(t.confirmClearHistory || 'Очистить историю?')) { await businessAiApi.clearHistory(business.id); setChatHistory([]); } }}
                 className={cn('ml-auto text-xs px-2 py-1 rounded-lg', isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-500 hover:bg-slate-100')}
               >
-                Очистить
+                {t.clearHistory || 'Очистить'}
               </button>
             )}
           </div>
@@ -4368,12 +4371,10 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
               <div className={cn('p-4 rounded-2xl text-sm', isDark ? 'bg-slate-700' : 'bg-purple-50')}>
                 <div className="flex items-center gap-2 mb-2">
                   <Bot className="w-4 h-4 text-purple-500" />
-                  <span className="font-medium text-purple-600">ИИ-советник</span>
+                  <span className="font-medium text-purple-600">{t.financialAdvisor || 'ИИ-советник'}</span>
                 </div>
                 <p className={isDark ? 'text-slate-300' : 'text-slate-700'}>
-                  👋 Привет! Я ваш персональный бизнес-советник для <strong>{business.name}</strong>.
-                  Я вижу ваши финансовые данные и историю транзакций, поэтому могу давать точные советы.
-                  Спросите меня о росте, масштабировании, снижении расходов или стратегии!
+                  {t.businessAdvisorGreeting || '👋 Привет! Я ваш персональный бизнес-советник.'}
                 </p>
               </div>
             ) : chatHistory.map((msg: any, i: number) => (
@@ -4387,7 +4388,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
                   {msg.role === 'assistant' && (
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <Bot className="w-3.5 h-3.5 text-purple-500" />
-                      <span className="text-xs font-medium text-purple-500">ИИ-советник</span>
+                      <span className="text-xs font-medium text-purple-500">{t.financialAdvisor || 'ИИ-советник'}</span>
                     </div>
                   )}
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
@@ -4413,7 +4414,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              placeholder="Как увеличить прибыль? (Enter чтобы отправить)"
+              placeholder={t.businessChatPlaceholder || "Как увеличить прибыль? (Enter чтобы отправить)"}
               className="flex-1 bg-transparent outline-none text-sm px-2"
               disabled={chatSending}
             />
@@ -4431,6 +4432,7 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
       {/* Add Transaction Modal */}
       {showAddTx && (
         <AddTransactionModal
+          t={t}
           isDark={isDark}
           businessId={business.id}
           onClose={() => setShowAddTx(false)}
@@ -4442,21 +4444,21 @@ function BusinessDetailView({ business, isDark, formatCurrency, onBack }: any) {
 }
 
 // ---- Add Transaction Modal ----
-function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
+function AddTransactionModal({ t, isDark, businessId, onClose, onAdd }: any) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ amount: '', type: 'income', category: 'sales', description: '', date: new Date().toISOString().slice(0, 10) });
 
   const filteredCats = TX_CATEGORIES.filter(c => c.type === form.type);
 
   const handleSubmit = async () => {
-    if (!form.amount || isNaN(Number(form.amount))) return alert('Введите корректную сумму');
+    if (!form.amount || isNaN(Number(form.amount))) return alert(t.enterCorrectAmount || 'Введите корректную сумму');
     setLoading(true);
     try {
       const tx = await businessTxApi.create(businessId, form);
       onAdd(tx);
       onClose();
     } catch {
-      alert('Ошибка при добавлении транзакции');
+      alert(t.errorAddingTransaction || 'Ошибка при добавлении транзакции');
     } finally {
       setLoading(false);
     }
@@ -4466,7 +4468,7 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className={cn('w-full max-w-md rounded-3xl p-6 shadow-2xl', isDark ? 'bg-slate-800 border border-slate-700' : 'bg-white')}>
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold">Добавить транзакцию</h3>
+          <h3 className="text-lg font-bold">{t.addTransaction || 'Добавить транзакцию'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-slate-500/10 rounded-full"><X className="w-5 h-5" /></button>
         </div>
 
@@ -4484,14 +4486,14 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
                     : isDark ? 'bg-slate-700' : 'bg-slate-100'
                 )}
               >
-                {type === 'income' ? '↑ Доход' : '↓ Расход'}
+                {type === 'income' ? `↑ ${t.income || 'Доход'}` : `↓ ${t.expense || 'Расход'}`}
               </button>
             ))}
           </div>
 
           {/* Amount */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Сумма (₸)</label>
+            <label className="text-sm font-medium mb-1.5 block">{t.amount || 'Сумма'} (₸)</label>
             <input
               type="number"
               value={form.amount}
@@ -4503,30 +4505,30 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
 
           {/* Category */}
           <div>
-            <label className="text-sm font-medium mb-1.5 block">Категория</label>
+            <label className="text-sm font-medium mb-1.5 block">{t.category || 'Категория'}</label>
             <select
               value={form.category}
               onChange={e => setForm({ ...form, category: e.target.value })}
               className={cn('w-full p-3 rounded-xl border outline-none', isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200')}
             >
-              {filteredCats.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              {filteredCats.map(c => <option key={c.value} value={c.value}>{t[c.labelKey] || c.labelKey}</option>)}
             </select>
           </div>
 
           {/* Description + Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Описание</label>
+              <label className="text-sm font-medium mb-1.5 block">{t.description || 'Описание'}</label>
               <input
                 type="text"
                 value={form.description}
                 onChange={e => setForm({ ...form, description: e.target.value })}
-                placeholder="Необязательно"
+                placeholder={t.optional || 'необязательно'}
                 className={cn('w-full p-3 rounded-xl border outline-none', isDark ? 'bg-slate-700 border-slate-600' : 'bg-slate-50 border-slate-200')}
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Дата</label>
+              <label className="text-sm font-medium mb-1.5 block">{t.date || 'Дата'}</label>
               <input
                 type="date"
                 value={form.date}
@@ -4538,7 +4540,7 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
         </div>
 
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className={cn('flex-1 py-3 rounded-xl font-medium', isDark ? 'bg-slate-700' : 'bg-slate-100')}>Отмена</button>
+          <button onClick={onClose} className={cn('flex-1 py-3 rounded-xl font-medium', isDark ? 'bg-slate-700' : 'bg-slate-100')}>{t.cancel || 'Отмена'}</button>
           <button
             onClick={handleSubmit}
             disabled={loading || !form.amount}
@@ -4547,7 +4549,7 @@ function AddTransactionModal({ isDark, businessId, onClose, onAdd }: any) {
               form.type === 'income' ? 'bg-gradient-to-r from-emerald-500 to-teal-600' : 'bg-gradient-to-r from-red-500 to-rose-600'
             )}
           >
-            {loading ? 'Сохранение...' : form.type === 'income' ? '+ Добавить доход' : '- Добавить расход'}
+            {loading ? (t.saving || 'Сохранение...') : form.type === 'income' ? `+ ${t.addIncome || 'Добавить доход'}` : `- ${t.addExpense || 'Добавить расход'}`}
           </button>
         </div>
       </div>
@@ -4874,7 +4876,7 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
           {/* Recommendations */}
           {Array.isArray(analysis.recommendations) && (
             <div className={cn('p-6 rounded-2xl border', isDark ? 'bg-slate-900/50 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}>
-              <h3 className="font-bold mb-4">💡 {t.advisorInsights}</h3>
+              <h3 className="font-bold mb-4">💡 {t.advisorRecommendations}</h3>
               <ul className="space-y-2">
                 {analysis.recommendations.map((rec: string, i: number) => (
                   <li key={i} className="flex items-start gap-3">

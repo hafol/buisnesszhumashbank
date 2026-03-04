@@ -37,7 +37,7 @@ router.get('/history', authMiddleware, async (req, res) => {
 router.post('/chat', authMiddleware, async (req, res) => {
     try {
         const { businessId } = req.params;
-        const { message } = req.body;
+        const { message, language } = req.body;
 
         if (!message) return res.status(400).json({ error: 'Сообщение пустое' });
 
@@ -82,6 +82,7 @@ router.post('/chat', authMiddleware, async (req, res) => {
             transactions: transactions || [],
             chatHistory: history || [],
             userMessage: message,
+            language: language,
         });
 
         // Save AI response

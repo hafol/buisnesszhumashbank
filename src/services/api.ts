@@ -113,7 +113,7 @@ export const businessTxApi = {
 // Business AI
 export const businessAiApi = {
     getHistory: (businessId: string) => request<any[]>(`/api/businesses/${businessId}/ai/history`),
-    sendMessage: (businessId: string, message: string) => request<any>(`/api/businesses/${businessId}/ai/chat`, { method: 'POST', body: JSON.stringify({ message }) }),
+    sendMessage: (businessId: string, message: string, language?: string) => request<any>(`/api/businesses/${businessId}/ai/chat`, { method: 'POST', body: JSON.stringify({ message, language }) }),
     clearHistory: (businessId: string) => request<any>(`/api/businesses/${businessId}/ai/history`, { method: 'DELETE' }),
     generateDoc: (prompt: string) => request<any>('/api/businesses/temp/ai/generate-json-doc', { method: 'POST', body: JSON.stringify({ prompt }) }),
 };
