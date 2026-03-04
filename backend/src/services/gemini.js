@@ -4,9 +4,21 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
 /**
+ * Robustly extracts JSON from a string that might contain Markdown code blocks or other text.
+ */
+function extractJson(text) {
+  const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/i);
+  if (jsonMatch) return jsonMatch[1].trim();
+  const blockMatch = text.match(/```\s*([\s\S]*?)\s*```/);
+  if (blockMatch) return blockMatch[1].trim();
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end !== -1 && end > start) return text.substring(start, end + 1);
+  return text.trim();
+}
+
+/**
  * Analyzes a legal contract text
- * @param {string} contractText
- * @returns {Promise<Object>} { summary, keyTerms, obligations, risks, deadlines }
  */
 async function analyzeContract(contractText) {
   const prompt = `Ты — профессиональный юридический консультант (AI Lawyer), эксперт по гражданскому и хозяйственному праву Республики Казахстан.
@@ -37,16 +49,11 @@ ${contractText}
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-
-  // Strip markdown code blocks if present
-  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-  return JSON.parse(cleaned);
+  return JSON.parse(extractJson(text));
 }
 
 /**
- * Calculates Kazakhstan taxes based on business or individual info
- * @param {Object} params
- * @returns {Promise<Object>} full tax calculation
+ * Calculates Kazakhstan taxes
  */
 async function calculateTaxes({ userType, businessType, taxRegime, income, period, employeeCount, currentDate }) {
   const prompt = `Ты — Старший Налоговый Консультант и Главный Бухгалтер Республики Казахстан с 20-летним стажем. 
@@ -101,15 +108,11 @@ async function calculateTaxes({ userType, businessType, taxRegime, income, perio
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-  return JSON.parse(cleaned);
+  return JSON.parse(extractJson(text));
 }
 
 /**
  * Chat with a tax expert
- * @param {string} userMessage
- * @param {Object} context ({ taxData, userType, regime })
- * @returns {Promise<string>} expert response
  */
 async function chatWithTaxExpert(userMessage, context) {
   const prompt = `Ты — Старший Налоговый Консультант РК. 
@@ -134,9 +137,7 @@ async function chatWithTaxExpert(userMessage, context) {
 }
 
 /**
- * Parses a bank statement and extracts ALL transactions with categorization
- * @param {string} statementText
- * @returns {Promise<Array>} array of categorized transactions
+ * Parses a bank statement
  */
 async function parseTransactions(statementText) {
   const prompt = `Ты финансовый аналитик. Распарси следующую банковскую выписку и извлеки ВСЕ операции.
@@ -170,15 +171,12 @@ ${statementText}
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-  const parsed = JSON.parse(cleaned);
+  const parsed = JSON.parse(extractJson(text));
   return parsed.transactions || [];
 }
 
 /**
  * General document analysis
- * @param {string} documentText
- * @returns {Promise<Object>}
  */
 async function analyzeDocument(documentText) {
   const prompt = `Проанализируй этот документ и предоставь ответ в JSON:
@@ -201,12 +199,11 @@ ${documentText}
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-  return JSON.parse(cleaned);
+  return JSON.parse(extractJson(text));
 }
 
 /**
- * Business advisor AI with memory and financial context
+ * Business advisor AI
  */
 async function chatWithBusinessAdvisor({ businessName, businessType, businessDescription, transactions, chatHistory, userMessage, language = 'ru' }) {
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
@@ -257,49 +254,48 @@ INSTRUCTIONS:
 }
 
 /**
- * Forecasts taxes for the next quarter based on current income
+ * Forecasts taxes
  */
 async function forecastTaxes({ income, taxRegime, businessType, nextQuarter, currentDate }) {
-  const prompt = `Ты — старший налоговый консультант РК.На основе текущих данных составь прогноз налоговой нагрузки на ${nextQuarter}.
+  const prompt = `Ты — старший налоговый консультант РК. На основе текущих данных составь прогноз налоговой нагрузки на ${nextQuarter}.
 
 Входные данные:
-  - Текущий доход: ${income} тенге
-    - Налоговый режим: ${taxRegime}
-  - Тип бизнеса: ${businessType}
-  - Дата: ${currentDate}
+- Текущий доход: ${income} тенге
+- Налоговый режим: ${taxRegime}
+- Тип бизнеса: ${businessType}
+- Дата: ${currentDate}
 
 Допущения для прогноза:
-  - Рост дохода на 10 - 15 % (оптимистичный) и 5 % (консервативный)
-    - Учти сезонные факторы
+- Рост дохода на 10-15% (оптимистичный) и 5% (консервативный)
+- Учти сезонные факторы
 
 Ответ СТРОГО в JSON:
-  {
-    "nextQuarter": "${nextQuarter}",
-      "currentIncome": ${income},
-    "conservativeIncome": число,
-      "optimisticIncome": число,
-        "conservativeTax": число,
-          "optimisticTax": число,
-            "taxBreakdown": [
-              { "name": "название налога", "conservative": число, "optimistic": число, "description": "объяснение" }
-            ],
-              "totalConservative": число,
-                "totalOptimistic": число,
-                  "recommendations": ["рекомендация 1", "рекомендация 2", "рекомендация 3"],
-                    "warnings": ["предупреждение если есть"],
-                      "tip": "главный совет на этот квартал"
-  }
+{
+  "nextQuarter": "${nextQuarter}",
+  "currentIncome": ${income},
+  "conservativeIncome": number,
+  "optimisticIncome": number,
+  "conservativeTax": number,
+  "optimisticTax": number,
+  "taxBreakdown": [
+    { "name": "название налога", "conservative": number, "optimistic": number, "description": "объяснение" }
+  ],
+  "totalConservative": number,
+  "totalOptimistic": number,
+  "recommendations": ["рекомендация 1", "рекомендация 2", "рекомендация 3"],
+  "warnings": ["предупреждение если есть"],
+  "tip": "главный совет на этот квартал"
+}
 
 Отвечай ТОЛЬКО JSON.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n ? /, '').replace(/\n ? ```$/, '').trim();
-  return JSON.parse(cleaned);
+  return JSON.parse(extractJson(text));
 }
 
 /**
- * Analyzes overall financial health across all businesses
+ * Analyzes financial health
  */
 async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses, businessCount, currentDate, language = 'ru' }) {
   const categoryMap = {};
@@ -324,81 +320,76 @@ async function analyzeFinancialHealth({ transactions, totalIncome, totalExpenses
   const targetLang = langMap[language] || langMap['ru'];
 
   const prompt = `[SYSTEM INSTRUCTION: RESPOND ENTIRELY IN ${targetLang.toUpperCase()}. DO NOT USE RUSSIAN.]
-  [ПАЙДАЛАНУШЫ НҰСҚАУЛЫҒЫ: ТЕК ${targetLang.toUpperCase()} ТІЛІНДЕ ЖАУАП БЕРІҢІЗ.]
 
-You are a professional financial advisor.Analyze the business financial health for ${currentDate}.
+You are a professional financial advisor. Analyze the business financial health for ${currentDate}.
 
-    DATA:
-    - Businesses: ${businessCount}
-  - Total Income: ${totalIncome} KZT
-    - Total Expenses: ${totalExpenses} KZT
-      - Net Profit: ${profit} KZT
-        - Margin: ${margin}%
-          - Top Expense Categories: ${JSON.stringify(topCategories)}
-  - Total Transactions: ${transactions.length}
+DATA:
+- Businesses: ${businessCount}
+- Total Income: ${totalIncome} KZT
+- Total Expenses: ${totalExpenses} KZT
+- Net Profit: ${profit} KZT
+- Margin: ${margin}%
+- Top Expense Categories: ${JSON.stringify(topCategories)}
+- Total Transactions: ${transactions.length}
 
-  IMPORTANT: ALL TEXT FIELDS IN THE JSON MUST BE IN ${targetLang.toUpperCase()}. 
+IMPORTANT: ALL TEXT FIELDS IN THE JSON MUST BE IN ${targetLang.toUpperCase()}. 
 Even if the transaction data is in Russian, YOU MUST TRANSLATE EVERYTHING to ${targetLang}. 
 NO RUSSIAN WORDS ALLOWED in "healthLabel", "summary", "insights", or "recommendations".
 
-    TASK:
-  1. Score financial health from 0 - 100.
-  2. BE DETERMINISTIC.If numbers don't change, healthScore must stay the same.
-  3. Provide specific recommendations in ${targetLang}.
+TASK:
+1. Score financial health from 0-100.
+2. BE DETERMINISTIC. If numbers don't change, healthScore must stay the same.
+3. Provide specific recommendations in ${targetLang}.
 
 STRICT JSON FORMAT:
-  {
-    "healthScore": number,
-      "healthLabel": "label in ${targetLang}",
-        "healthColor": "emerald|blue|amber|orange|red",
-          "summary": "2-3 sentences in ${targetLang}",
-            "insights": [
-              { "icon": "emoji", "title": "title in ${targetLang}", "text": "description in ${targetLang}", "type": "positive|neutral|warning|danger" }
-            ],
-              "topExpenses": ${JSON.stringify(topCategories)},
-    "recommendations": ["rec 1 in ${targetLang}", "rec 2", "rec 3"],
-      "monthlyTarget": number
-  }
+{
+  "healthScore": number,
+  "healthLabel": "label in ${targetLang}",
+  "healthColor": "emerald|blue|amber|orange|red",
+  "summary": "2-3 sentences in ${targetLang}",
+  "insights": [
+    { "icon": "emoji", "title": "title in ${targetLang}", "text": "description in ${targetLang}", "type": "positive|neutral|warning|danger" }
+  ],
+  "topExpenses": ${JSON.stringify(topCategories)},
+  "recommendations": ["rec 1 in ${targetLang}", "rec 2", "rec 3"],
+  "monthlyTarget": number
+}
 
 Output ONLY valid JSON.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n ? /, '').replace(/\n ? ```$/, '').trim();
-  return JSON.parse(cleaned);
+  return JSON.parse(extractJson(text));
 }
 
 /**
- * Generates a professional PDF document structure (pdfmake JSON) based on user description
- * @param {string} promptText
- * @returns {Promise<Object>} pdfmake document definition
+ * Generates document content
  */
 async function generateDocumentContent(promptText) {
-  const prompt = `Ты — профессиональный помощник по подготовке юридических и финансовых документов в Казахстане.
+  const prompt = `Ты — профессиональный помощник по подготовке юридических и финансовых документов в Казахстане. 
 Твоя задача: создать структуру документа для библиотеки jsPDF на основе описания пользователя.
 
 ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ К СТРУКТУРЕ:
-  1. Использовать шрифт 'TimesNewRoman'(уже настроен в системе).
+1. Использовать шрифт 'TimesNewRoman' (уже настроен в системе).
 2. fontSize для основного текста: 11.
-  3. Должен быть заголовок(bold: true, alignment: 'center').
-4. Профессиональный отступ(margins).
+3. Должен быть заголовок (bold: true, alignment: 'center').
+4. Профессиональный отступ (margins).
 5. Если в описании есть суммы, сроки или условия — оформи их в таблицу или маркированный список.
-6. Язык документа должен соответствовать языку запроса пользователя(русский, казахский или английский).
+6. Язык документа должен соответствовать языку запроса пользователя (русский, казахский или английский).
 
-ТРЕБОВАНИЯ К ФОРМАТУ(JSON):
-  - Ответ должен быть СТРОГО валидным JSON объектом.
-- Используй ключи: "content", которые могут содержать "text", "bold", "fontSize", "alignment", и "table"(с body: [[...]]).
+ТРЕБОВАНИЯ К ФОРМАТУ (JSON):
+- Ответ должен быть СТРОГО валидным JSON объектом.
+- Используй ключи: "content", которые могут содержать "text", "bold", "fontSize", "alignment", и "table" (с body: [[...]]).
 - Мы используем библиотеку jsPDF для отрисовки, поэтому структура должна быть плоской и понятной.
 
 Описание документа:
-  "${promptText}"
+"${promptText}"
 
-Верни ТОЛЬКО JSON объект.Без лишних слов и markdown - разметки.`;
+Верни ТОЛЬКО JSON объект. Без лишних слов и markdown-разметки.`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
-  const cleaned = text.replace(/^```json\n ? /, '').replace(/\n ? ```$/, '').trim();
-  return JSON.parse(cleaned);
+  return JSON.parse(extractJson(text));
 }
 
 module.exports = {
@@ -412,5 +403,3 @@ module.exports = {
   analyzeFinancialHealth,
   generateDocumentContent
 };
-
-
