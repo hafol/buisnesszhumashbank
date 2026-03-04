@@ -4199,8 +4199,9 @@ function BusinessDetailView({ t, language, business, isDark, formatCurrency, onB
     try {
       const { response } = await businessAiApi.sendMessage(business.id, msg, language);
       setChatHistory(prev => [...prev, { role: 'assistant', message: response, created_at: new Date().toISOString() }]);
-    } catch {
-      setChatHistory(prev => [...prev, { role: 'assistant', message: t.aiConnectionError || 'AI connection error', created_at: new Date().toISOString() }]);
+    } catch (err: any) {
+      const errMsg = err?.message || 'Ошибка связи. Попробуйте ещё раз.';
+      setChatHistory(prev => [...prev, { role: 'assistant', message: `⚠️ ${errMsg}`, created_at: new Date().toISOString() }]);
     } finally {
       setChatSending(false);
     }
