@@ -4730,13 +4730,50 @@ function TransactionHistoryModule({ t, isDark, transactions, formatCurrency }: a
 // ============================================================
 // FINANCIAL ADVISOR MODULE
 // ============================================================
+const ADVISOR_CACHE_KEY = 'bzb_advisor_cache';
+const ADVISOR_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCurrency, language }: any) {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [cachedAt, setCachedAt] = useState<Date | null>(null);
 
   const totalIncome = (transactions || []).filter((tx: any) => tx.type === 'income').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
   const totalExpenses = (transactions || []).filter((tx: any) => tx.type === 'expense').reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+
+  // Load from cache on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ADVISOR_CACHE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        const age = Date.now() - cached.timestamp;
+        if (age < ADVISOR_CACHE_TTL && cached.language === language) {
+          setAnalysis(cached.data);
+          setCachedAt(new Date(cached.timestamp));
+          return; // Don't auto-fetch if fresh cache exists
+        }
+      }
+    } catch (_) { }
+    // No valid cache — auto-fetch only if there's data
+    if (transactions?.length > 0) doAnalysis();
+  }, []);
+
+  // Re-fetch on language change (but don't use stale cache for different language)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(ADVISOR_CACHE_KEY);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        if (cached.language === language && Date.now() - cached.timestamp < ADVISOR_CACHE_TTL) {
+          setAnalysis(cached.data);
+          setCachedAt(new Date(cached.timestamp));
+          return;
+        }
+      }
+    } catch (_) { }
+  }, [language]);
 
   const doAnalysis = async () => {
     if (!transactions || transactions.length === 0) return;
@@ -4751,15 +4788,18 @@ function FinancialAdvisorModule({ t, isDark, transactions, businesses, formatCur
         language
       });
       setAnalysis(result);
+      setCachedAt(new Date());
+      // Cache the result
+      localStorage.setItem(ADVISOR_CACHE_KEY, JSON.stringify({
+        data: result,
+        timestamp: Date.now(),
+        language
+      }));
     } catch (err: any) {
       setError(err.message || 'Ошибка ИИ советника');
     }
     setLoading(false);
   };
-
-  useEffect(() => {
-    if (transactions?.length > 0) doAnalysis();
-  }, [transactions?.length, language]);
 
   const scoreColor = !analysis ? 'slate' : analysis.healthScore >= 75 ? 'emerald' : analysis.healthScore >= 50 ? 'blue' : analysis.healthScore >= 30 ? 'amber' : 'red';
 

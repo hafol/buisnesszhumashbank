@@ -1,17 +1,27 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
 
-async function safeGenerateContent(prompt) {
+async function safeGenerateContent(prompt, retries = 2) {
   try {
     return await model.generateContent(prompt);
   } catch (err) {
     const msg = err.message || '';
-    if (msg.includes('429 Too Many Requests') || msg.includes('quota')) {
-      throw new Error('ИИ-советник временно перегружен из-за превышения квоты API (Too Many Requests). Пожалуйста, подождите 1-2 минуты и повторите попытку.');
-    } else if (msg.includes('503 Service Unavailable') || msg.includes('overloaded')) {
-      throw new Error('Сервисы ИИ в данный момент недоступны или перегружены. Повторите попытку позже.');
+    const isRateLimit = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
+    const isOverloaded = msg.includes('503') || msg.includes('overloaded') || msg.includes('high demand');
+
+    if ((isRateLimit || isOverloaded) && retries > 0) {
+      const wait = isRateLimit ? 8000 : 5000;
+      console.log(`Gemini ${isRateLimit ? '429' : '503'} — retrying in ${wait / 1000}s (${retries} retries left)`);
+      await new Promise(r => setTimeout(r, wait));
+      return safeGenerateContent(prompt, retries - 1);
+    }
+
+    if (isRateLimit) {
+      throw new Error('ИИ-советник временно перегружен (лимит запросов). Подождите 1-2 минуты и нажмите «Повторить».');
+    } else if (isOverloaded) {
+      throw new Error('Серверы ИИ перегружены. Повторите попытку через несколько минут.');
     }
     throw err;
   }
