@@ -1,24 +1,46 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+// Support up to 3 API keys — rotates automatically on quota errors
+const API_KEYS = [
+  process.env.GEMINI_API_KEY,
+  process.env.GEMINI_API_KEY_2,
+  process.env.GEMINI_API_KEY_3,
+].filter(Boolean);
 
-async function safeGenerateContent(prompt, retries = 2) {
+if (API_KEYS.length === 0) {
+  console.error('⚠️  No GEMINI_API_KEY configured!');
+}
+
+const MODEL_NAME = 'gemini-2.0-flash-lite';
+
+function getModel(keyIndex = 0) {
+  const key = API_KEYS[keyIndex % API_KEYS.length];
+  return new GoogleGenerativeAI(key).getGenerativeModel({ model: MODEL_NAME });
+}
+
+async function safeGenerateContent(prompt, keyIndex = 0, retries = 1) {
   try {
+    const model = getModel(keyIndex);
     return await model.generateContent(prompt);
   } catch (err) {
     const msg = err.message || '';
-    const isRateLimit = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
+    const isQuota = msg.includes('429') || msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED');
     const isOverloaded = msg.includes('503') || msg.includes('overloaded') || msg.includes('high demand');
 
-    if ((isRateLimit || isOverloaded) && retries > 0) {
-      const wait = isRateLimit ? 8000 : 5000;
-      console.log(`Gemini ${isRateLimit ? '429' : '503'} — retrying in ${wait / 1000}s (${retries} retries left)`);
-      await new Promise(r => setTimeout(r, wait));
-      return safeGenerateContent(prompt, retries - 1);
+    // Try next key if quota exceeded
+    if (isQuota && keyIndex + 1 < API_KEYS.length) {
+      console.log(`Key [${keyIndex}] quota exceeded — switching to key [${keyIndex + 1}]`);
+      return safeGenerateContent(prompt, keyIndex + 1, retries);
     }
 
-    if (isRateLimit) {
+    // Retry same key on overload
+    if (isOverloaded && retries > 0) {
+      console.log(`Gemini overloaded — retrying in 5s`);
+      await new Promise(r => setTimeout(r, 5000));
+      return safeGenerateContent(prompt, keyIndex, retries - 1);
+    }
+
+    if (isQuota) {
       throw new Error('ИИ-советник временно перегружен (лимит запросов). Подождите 1-2 минуты и нажмите «Повторить».');
     } else if (isOverloaded) {
       throw new Error('Серверы ИИ перегружены. Повторите попытку через несколько минут.');
