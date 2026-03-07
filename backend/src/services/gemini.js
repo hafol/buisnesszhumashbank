@@ -11,7 +11,7 @@ if (API_KEYS.length === 0) {
   console.error('⚠️  No GEMINI_API_KEY configured!');
 }
 
-const MODEL_NAME = 'gemini-2.0-flash-lite';
+const MODEL_NAME = 'gemini-flash-latest';
 
 function getModel(keyIndex = 0) {
   const key = API_KEYS[keyIndex % API_KEYS.length];
